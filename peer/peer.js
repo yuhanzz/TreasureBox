@@ -15,7 +15,7 @@ const bootstrapMultiaddrs = config['bootstrapMultiaddrs'];
 const createNode = async (bootstrapers) => {
   const node = await Libp2p.create({
     addresses: {
-      listen: ['/ip4/0.0.0.0/tcp/0']
+      listen: ['/ip4/0.0.0.0/tcp/15003']
     },
     modules: {
       transport: [TCP],
