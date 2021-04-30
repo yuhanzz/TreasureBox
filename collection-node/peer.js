@@ -14,11 +14,34 @@ const bootstrapMultiaddrs = config['bootstrapMultiaddrs'];
 
 // Global variables
 var node;
+var myPeerId;
+const p2pAddress = '/ip4/0.0.0.0/tcp/'
+var p2pPort = 15003
+
+// Helper functions
+function P2PmessageToObject(message) {
+  return JSON.parse(uint8ArrayToString(message.data))
+}
+
+function ObjectToP2Pmessage(message) {
+  return uint8ArrayFromString(JSON.stringify(message));
+}
+
+function handleSearchItem(messageBody) {
+  const requestorPeerId = messageBody['from'];
+  var responseMessageBody = {
+    type: "search_item_response",
+    content: "request is successful",
+    from: myPeerId,
+    queryId: messageBody['queryId']
+  }
+  node.pubsub.publish(requestorPeerId, ObjectToP2Pmessage(responseMessageBody));
+}
 
 const createNode = async (bootstrapers) => {
   const node = await Libp2p.create({
     addresses: {
-      listen: ['/ip4/0.0.0.0/tcp/14003']
+      listen: [p2pAddress + p2pPort]
     },
     modules: {
       transport: [TCP],
@@ -47,52 +70,49 @@ const createNode = async (bootstrapers) => {
 async function startPeer() {
 
   try {
-    const node = await createNode(bootstrapMultiaddrs)
+    node = await createNode(bootstrapMultiaddrs);
+    myPeerId = node.peerId.toB58String();
 
-    node.on('peer:discovery', (peerId) => {
-      console.log(`Peer ${node.peerId.toB58String()} discovered: ${peerId.toB58String()}`)
-      node.dial(peerId)
+    node.on('peer:discovery', (foundPeerId) => {
+      console.log(`Peer ${myPeerId} discovered: ${foundPeerId.toB58String()}`)
+      node.dial(foundPeerId)
     })
 
-    // handlers
+    // listeners
     node.pubsub.on('search_item_query', (msg) => {
-      // var messageStr = uint8ArrayToString(msg.data);
-      const queryMessageBody = JSON.parse(uint8ArrayToString(msg.data));
+      console.log(P2PmessageToObject(msg));
+      const queryMessageBody = P2PmessageToObject(msg);
       const responseMessageBody = {
         type: 'search_item_query_hit',
         queryId: queryMessageBody['queryId'],
-        peerId: node.peerId.toB58String()
+        from: myPeerId
       }
 
-      console.log(queryMessageBody['peerId']);
-      console.log(responseMessageBody);
-      node.pubsub.publish(queryMessageBody['peerId'], uint8ArrayFromString(JSON.stringify(responseMessageBody)))
-      // node.pubsub.publish('search_item_query_hit', uint8ArrayFromString(`hello from ${node.peerId.toB58String()}`))
-      // console.log(`node ${node.peerId.toB58String()} received: ${uint8ArrayToString(msg.data)}`)
+      node.pubsub.publish(queryMessageBody['from'], ObjectToP2Pmessage(responseMessageBody))
     })
 
-    node.pubsub.on(node.peerId.toB58String(), (msg) => {
-      console.log(JSON.parse(uint8ArrayToString(msg.data)));
-      // console.log(`node ${node.peerId.toB58String()} received: ${uint8ArrayToString(msg.data)}`)
+    node.pubsub.on(myPeerId, (msg) => {
+      console.log(P2PmessageToObject(msg));
+
+      const messageBody = P2PmessageToObject(msg);
+      if (messageBody['type'] == 'search_item_request') {
+        handleSearchItem(messageBody);
+      }
     })
-
-
-    console.log(`peer node started with id: ${node.peerId.toB58String()}`)
 
     await node.start()
 
     await node.pubsub.subscribe('search_item_query')
-    await node.pubsub.subscribe(node.peerId.toB58String())
+    await node.pubsub.subscribe(myPeerId)
 
-    // setInterval(() => {
-    //   node.pubsub.publish(topic, uint8ArrayFromString(`hello from ${node.peerId.toB58String()}`))
-    // }, 5000)
   } catch (e) {
     console.log(e);
   }
 }
 
 async function main() {
+  // Specify port for p2p
+  p2pPort = process.argv[2];
   startPeer();
 }
 

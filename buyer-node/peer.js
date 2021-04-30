@@ -19,8 +19,20 @@ const path = require('path');
 var node;
 var request_index = 0;
 var queryMap = new Map();
+var responseMap = new Map();
+var myPeerId;
+const p2pAddress = '/ip4/0.0.0.0/tcp/'
+var p2pPort = 15003
 
 // Helper functions
+function P2PmessageToObject(message) {
+  return JSON.parse(uint8ArrayToString(message.data))
+}
+
+function ObjectToP2Pmessage(message) {
+  return uint8ArrayFromString(JSON.stringify(message));
+}
+
 
 // query ID is peerId + timestamp + request_index, example: QmPtbwUx8wLRwzZyFtWjTJvJCCv1ZonHcUdj1uTv373aKc-1619730560381-0
 function generateQueryId() {
@@ -33,19 +45,39 @@ function generateQueryId() {
     request_index++;
   }
 
-  return node.peerId.toB58String() + `-` + (new Date()).getTime() + `-` + current_index;
+  return myPeerId + `-` + (new Date()).getTime() + `-` + current_index;
 }
 
 function handleQueryHit(messageBody) {
   const messageQueryId = messageBody['queryId'];
 
   if (queryMap.has(messageQueryId)) {
-    const providerPeerId = messageBody['peerId'];
+    const providerPeerId = messageBody['from'];
     const requestMessageBody = queryMap.get(messageQueryId);
-    node.pubsub.publish(providerPeerId, uint8ArrayFromString(JSON.stringify(requestMessageBody)));
+    node.pubsub.publish(providerPeerId, ObjectToP2Pmessage(requestMessageBody));
     queryMap.delete(messageQueryId);
   }
-  
+}
+
+function handleSearchItemResponse(messageBody) {
+  const queryId = messageBody['queryId'];
+  const content = messageBody['content'];
+  responseMap.set(queryId, content);
+}
+
+// P2P response will be put into responseMap when received, this function wait for that condition. 
+function ensureResponseArrives(queryId, timeout) {
+  var start = Date.now();
+  return new Promise(waitForResponse);
+
+  function waitForResponse(resolve, reject) {
+    if (responseMap.has(queryId))
+      resolve(responseMap.get(queryId));
+    else if (timeout && (Date.now() - start) >= timeout)
+      reject(new Error("timeout"));
+    else
+      setTimeout(waitForResponse.bind(this, resolve, reject), 30);
+  }
 }
 
 function startServer() {
@@ -65,29 +97,26 @@ function startServer() {
   app.post('/search', function (req, res) {
     var queryMessageBody = req.body;
     var queryId = generateQueryId();
-    queryMessageBody['peerId'] = node.peerId.toB58String();
+    queryMessageBody['from'] = myPeerId;
     queryMessageBody['queryId'] = queryId;
 
-    var requestMessageBody = {
-      type: 'search_item_request',
-      searchCategory: queryMessageBody.searchCategory,
-      peerId: node.peerId.toB58String()
-    };
+    var requestMessageBody = queryMessageBody;
+    requestMessageBody['type'] = 'search_item_request';
 
     // Record the query in the queryMap
     queryMap.set(queryId, requestMessageBody);
 
-
-    console.log(queryId);
-    console.log(queryMessageBody);
-    console.log(queryMap.get(queryId));
-
-
     // Send p2p message
-    node.pubsub.publish('search_item_query', uint8ArrayFromString(JSON.stringify(queryMessageBody)))
+    node.pubsub.publish('search_item_query', ObjectToP2Pmessage(queryMessageBody));
+
+    // Wait for response
+    ensureResponseArrives(queryId, 1000000).then(function () {
+      console.log("response received");
+      console.log(responseMap.get(queryId));
+      responseMap.delete(queryId);
+    });
 
     res.status(204).send();
-    // node.pubsub.publish(`search_item_query`, uint8ArrayFromString(`hello from ${node.peerId.toB58String()}`))
   });
 
 
@@ -98,7 +127,7 @@ function startServer() {
 const createNode = async (bootstrapers) => {
   const node = await Libp2p.create({
     addresses: {
-      listen: ['/ip4/0.0.0.0/tcp/13003']
+      listen: [p2pAddress + p2pPort]
     },
     modules: {
       transport: [TCP],
@@ -128,29 +157,29 @@ async function startPeer() {
 
   try {
     node = await createNode(bootstrapMultiaddrs)
+    myPeerId = node.peerId.toB58String();
 
     // peer discovery, for debugging
-    node.on('peer:discovery', (peerId) => {
-      console.log(`Peer ${node.peerId.toB58String()} discovered: ${peerId.toB58String()}`)
-      node.dial(peerId)
+    node.on('peer:discovery', (foundPeerId) => {
+      console.log(`Peer ${myPeerId} discovered: ${foundPeerId.toB58String()}`)
+      node.dial(foundPeerId)
     })
 
-    // handler
-    node.pubsub.on(node.peerId.toB58String(), (msg) => {
-      console.log(msg);
-      const messageBody = JSON.parse(uint8ArrayToString(msg.data));
+    // listeners
+    node.pubsub.on(myPeerId, (msg) => {
+      console.log(P2PmessageToObject(msg));
+
+      const messageBody = P2PmessageToObject(msg);
       if (messageBody['type'] == 'search_item_query_hit') {
         handleQueryHit(messageBody);
+      } else if (messageBody['type'] == 'search_item_response') {
+        handleSearchItemResponse(messageBody);
       }
     })
 
-    // start the node
-    console.log(`peer node started with id: ${node.peerId.toB58String()}`)
-
     await node.start();
 
-    // buyer node only handles messages whose title is the buyer node's peer ID
-    await node.pubsub.subscribe(node.peerId.toB58String())
+    await node.pubsub.subscribe(myPeerId)
 
   } catch (e) {
     console.log(e);
@@ -158,6 +187,8 @@ async function startPeer() {
 }
 
 async function main() {
+  // Specify port for p2p
+  p2pPort = process.argv[2];
   startPeer();
   startServer();
 }
