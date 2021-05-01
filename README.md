@@ -90,6 +90,7 @@ all node:
     node.js
     libp2p
     docker
+    mosquitto
 
 buyer node:
     express.js
@@ -97,3 +98,12 @@ buyer node:
 
 ### TODO
 Need to prevent empty input in text box
+
+
+### on AWS EC2
+sudo yum update -y
+sudo yum groupinstall "Development Tools" -y
+sudo amazon-linux-extras install docker -y
+
+sudo service docker start
+sudo docker build -t p2p-boostrapper:latest .
