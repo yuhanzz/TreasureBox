@@ -1,0 +1,25 @@
+version: "3.5"
+
+services:
+  publisher:
+    hostname: publisher
+    container_name: publisher
+    build: .
+    networks:
+      - default
+    depends_on:
+      - broker
+
+  broker:
+    image: eclipse-mosquitto
+    hostname: mosquitto-broker
+    container_name: mosquitto-broker
+    volumes:
+      - ./mosquitto/:/mosquitto
+    networks:
+      - default
+    ports:
+      - "1883:1883"
+
+networks:
+  default:
