@@ -1,10 +1,10 @@
 version: "3.5"
 
 services:
-  publisher:
-    hostname: publisher
-    container_name: publisher
-    build: .
+  p2p:
+    hostname: p2p
+    container_name: p2p
+    build: ./p2p
     networks:
       - default
     depends_on:
@@ -12,8 +12,8 @@ services:
 
   broker:
     image: eclipse-mosquitto
-    hostname: mosquitto-broker
-    container_name: mosquitto-broker
+    hostname: broker
+    container_name: broker
     volumes:
       - ./mosquitto/:/mosquitto
     networks:
