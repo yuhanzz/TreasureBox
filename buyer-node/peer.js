@@ -162,7 +162,6 @@ async function startPeer() {
     // peer discovery, for debugging
     node.on('peer:discovery', (foundPeerId) => {
       console.log(`Peer ${myPeerId} discovered: ${foundPeerId.toB58String()}`)
-      node.dial(foundPeerId)
     })
 
     // listeners

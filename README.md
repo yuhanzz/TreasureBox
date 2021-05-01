@@ -107,3 +107,7 @@ sudo amazon-linux-extras install docker -y
 
 sudo service docker start
 sudo docker build -t p2p-boostrapper:latest .
+sudo docker run -it -p 15003:15003 p2p-boostrapper:latest
+
+### on local
+might need to remove node_modules when error occurs

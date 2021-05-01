@@ -49,7 +49,6 @@ async function main() {
 
   node.on('peer:discovery', (peerId) => {
     console.log(`Peer ${node.peerId.toB58String()} discovered: ${peerId.toB58String()}`)
-    node.dial(peerId)
   })
 
   node.pubsub.on(topic, (msg) => {
