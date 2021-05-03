@@ -1,4 +1,4 @@
 ```
-docker build -t p2p-boostrapper:latest .
-docker run -it -d -p 15003:15003 p2p-boostrapper:latest
+docker build -t boostrapper:latest .
+docker run -it -p 15003:15003 boostrapper:latest
 ```

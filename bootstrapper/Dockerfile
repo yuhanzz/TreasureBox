@@ -9,11 +9,10 @@ WORKDIR /app
 
 COPY . /app
 
-RUN npm install
+RUN npm install --global libp2p-relay-server   
 
 EXPOSE 15003
 
+ENTRYPOINT ["libp2p-relay-server"]
 
-ENTRYPOINT ["node"]
-
-CMD ["bootstrapper.js"]
+CMD ["--peerId", "./peer-id.json", "--listenMultiaddrs", "/ip4/0.0.0.0/tcp/15003" ]
