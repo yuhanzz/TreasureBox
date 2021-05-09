@@ -61,8 +61,7 @@ function handleQueryHit(messageBody) {
 
 function handleSearchItemResponse(messageBody) {
   const queryId = messageBody['queryId'];
-  const content = messageBody['content'];
-  responseMap.set(queryId, content);
+  responseMap.set(queryId, messageBody);
 }
 
 // P2P response will be put into responseMap when received, this function wait for that condition. 
@@ -186,8 +185,6 @@ async function startPeer() {
 }
 
 async function main() {
-  // Specify port for p2p
-  p2pPort = process.argv[2];
   startPeer();
   startServer();
 }

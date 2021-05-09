@@ -22,7 +22,7 @@ var queryMap = new Map();
 var responseMap = new Map();
 var myPeerId;
 const p2pAddress = '/ip4/0.0.0.0/tcp/'
-var p2pPort = 15003
+var p2pPort = 15004
 
 // Helper functions
 function P2PmessageToObject(message) {
