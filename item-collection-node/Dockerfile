@@ -16,4 +16,4 @@ EXPOSE 15003
 
 ENTRYPOINT ["node"]
 
-CMD ["peer.js"]
+CMD ["index.js"]

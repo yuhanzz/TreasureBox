@@ -31,16 +31,35 @@ function ObjectToP2Pmessage(message) {
 }
 
 function handleGetItemRequest(messageBody) {
-  const senderPeerId = messageBody['from']
+
+  const queryId = messageBody['queryId']
+  const requestorPeerId = messageBody['from']
+
+  // firstly sends query hit message
+  const queryHitResponseMessageBody = {
+    type: 'get_item_query_hit',
+    queryId: queryId,
+    from: myPeerId
+  }
+  node.pubsub.publish(requestorPeerId, ObjectToP2Pmessage(queryHitResponseMessageBody))
+
+  // perform database operation and send data
   delete messageBody['from']
+  delete messageBody['queryId']
+  delete messageBody['type']
 
   superagent.get('http://localhost:8080/item')
     .query(messageBody)
     .end((err, res) => {
       if (err) { return console.log(err); }
-      const items = res.body
-      console.log("item fetched: \n" + items)
-      node.pubsub.publish(senderPeerId, ObjectToP2Pmessage(items));
+      const itemsResponse = {
+        type: 'get_item_response',
+        queryId: queryId,
+        from: myPeerId,
+        data: res.body
+      }
+      console.log("item fetched and sent: \n" + itemsResponse)
+      node.pubsub.publish(requestorPeerId, ObjectToP2Pmessage(itemsResponse));
     });
 }
 
@@ -158,12 +177,12 @@ async function startPeer() {
       node.pubsub.publish(queryMessageBody['from'], ObjectToP2Pmessage(responseMessageBody))
     })
 
-    // node.pubsub.on('get_item_request', (msg) => {
-    //   console.log(P2PmessageToObject(msg));
-
-    //   const messageBody = P2PmessageToObject(msg);
-    //   handleGetItemRequest(messageBody);
-    // })
+    node.pubsub.on('get_item_query', (msg) => {
+      console.log('get_item_query')
+      console.log(P2PmessageToObject(msg));
+      const messageBody = P2PmessageToObject(msg);
+      handleGetItemRequest(messageBody);
+    })
 
     node.pubsub.on(myPeerId, (msg) => {
       console.log(P2PmessageToObject(msg));
@@ -177,8 +196,7 @@ async function startPeer() {
     await node.start();
 
     await node.pubsub.subscribe('post_item_query')
-    // await node.pubsub.subscribe('get_item_request')
-    await node.pubsub.subscribe('post_item_request')
+    await node.pubsub.subscribe('get_item_query')
     await node.pubsub.subscribe(myPeerId)
 
   } catch (e) {

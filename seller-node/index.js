@@ -54,6 +54,9 @@ function handleQueryHit(messageBody) {
   if (queryMap.has(messageQueryId)) {
     const providerPeerId = messageBody['from'];
     const requestMessageBody = queryMap.get(messageQueryId);
+    console.log('sending request')
+    console.log(providerPeerId)
+    console.log(requestMessageBody)
     node.pubsub.publish(providerPeerId, ObjectToP2Pmessage(requestMessageBody));
     queryMap.delete(messageQueryId);
   }
