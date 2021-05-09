@@ -1,61 +1,61 @@
-// const Libp2p = require('libp2p')
-// const TCP = require('libp2p-tcp')
-// const Mplex = require('libp2p-mplex')
-// const { NOISE } = require('libp2p-noise')
-// const Gossipsub = require('libp2p-gossipsub')
-// const Bootstrap = require('libp2p-bootstrap')
-// const PubsubPeerDiscovery = require('libp2p-pubsub-peer-discovery')
-// const uint8ArrayFromString = require('uint8arrays/from-string')
-// const uint8ArrayToString = require('uint8arrays/to-string')
+const Libp2p = require('libp2p')
+const TCP = require('libp2p-tcp')
+const Mplex = require('libp2p-mplex')
+const { NOISE } = require('libp2p-noise')
+const Gossipsub = require('libp2p-gossipsub')
+const Bootstrap = require('libp2p-bootstrap')
+const PubsubPeerDiscovery = require('libp2p-pubsub-peer-discovery')
+const uint8ArrayFromString = require('uint8arrays/from-string')
+const uint8ArrayToString = require('uint8arrays/to-string')
 
-
-// const config = require('./config.json');
-// const bootstrapMultiaddrs = config['bootstrapMultiaddrs'];
+const config = require('./config.json');
+const bootstrapMultiaddrs = config['bootstrapMultiaddrs'];
 
 const express = require('express');
 const mongoose = require('mongoose');
 const superagent = require('superagent');
-// const path = require('path');
 
-// // Global variables
-// var node;
-// var request_index = 0;
-// var queryMap = new Map();
-// var responseMap = new Map();
-// var myPeerId;
-// const p2pAddress = '/ip4/0.0.0.0/tcp/'
-// var p2pPort = 15003
+// Global variables
+var node;
+var myPeerId;
+const p2pAddress = '/ip4/0.0.0.0/tcp/'
+var p2pPort = 15003
 
-// // Helper functions
-// function P2PmessageToObject(message) {
-//   return JSON.parse(uint8ArrayToString(message.data))
-// }
+// Helper functions
+function P2PmessageToObject(message) {
+  return JSON.parse(uint8ArrayToString(message.data))
+}
 
-// function ObjectToP2Pmessage(message) {
-//   return uint8ArrayFromString(JSON.stringify(message));
-// }
+function ObjectToP2Pmessage(message) {
+  return uint8ArrayFromString(JSON.stringify(message));
+}
 
-// function handleGetItemRequest(messageBody) {
-//   const queryId = messageBody['queryId'];
-//   const content = messageBody['content'];
-//   responseMap.set(queryId, content);
+function handleGetItemRequest(messageBody) {
+  const senderPeerId = messageBody['from']
+  delete messageBody['from']
 
-// }
+  superagent.get('http://localhost:8080/item')
+    .query(messageBody)
+    .end((err, res) => {
+      if (err) { return console.log(err); }
+      const items = res.body
+      console.log("item fetched: \n" + items)
+      node.pubsub.publish(senderPeerId, ObjectToP2Pmessage(items));
+    });
+}
 
-function onConnectionSuccess() {
-  console.log('item database connected')
-
-  const initialItem = {
-    category: "book",
-    name: "The Sign of the Four",
-    description: "Limited edition. Brand new status.",
-    price: 17.8,
-    seller: "0xE9ABC5FDb983f371fd76F20d40da7892b7f8b380"
+function handlePostItemRequest(messageBody) {
+  const newItem = {
+    category: messageBody['category'],
+    name: messageBody['name'],
+    description: messageBody['description'],
+    price: messageBody['price'],
+    seller: messageBody['seller']
   }
 
   superagent
     .post('http://localhost:8080/item')
-    .send(initialItem)
+    .send(newItem)
     .end((err, res) => {
     });
 }
@@ -75,7 +75,7 @@ function startServer() {
       'mongodb://mongo:27017/item-db',
       { useNewUrlParser: true }
     )
-    .then(onConnectionSuccess)
+    .then(() => { console.log('item database connected') })
     .catch(err => console.log(err));
 
   const Item = require('./models/Item');
@@ -106,46 +106,74 @@ function startServer() {
   console.log('Server started at http://localhost:' + port);
 }
 
-// async function startPeer() {
+const createNode = async (bootstrapers) => {
+  const node = await Libp2p.create({
+    addresses: {
+      listen: [p2pAddress + p2pPort]
+    },
+    modules: {
+      transport: [TCP],
+      streamMuxer: [Mplex],
+      connEncryption: [NOISE],
+      pubsub: Gossipsub,
+      peerDiscovery: [Bootstrap, PubsubPeerDiscovery]
+    },
+    config: {
+      peerDiscovery: {
+        [PubsubPeerDiscovery.tag]: {
+          interval: 1000, // might be too frequent
+          enabled: true
+        },
+        [Bootstrap.tag]: {
+          enabled: true,
+          list: bootstrapers
+        }
+      }
+    }
+  })
 
-//   try {
-//     node = await createNode(bootstrapMultiaddrs)
-//     myPeerId = node.peerId.toB58String();
+  return node
+}
 
-//     // peer discovery, for debugging
-//     node.on('peer:discovery', (foundPeerId) => {
-//       console.log(`Peer ${myPeerId} discovered: ${foundPeerId.toB58String()}`)
-//     })
+async function startPeer() {
 
-//     // listeners
-//     node.pubsub.on('get-item-request', (msg) => {
-//       console.log(P2PmessageToObject(msg));
+  try {
+    node = await createNode(bootstrapMultiaddrs)
+    myPeerId = node.peerId.toB58String();
 
-//       const messageBody = P2PmessageToObject(msg);
-//       handleGetItemRequest(messageBody);
-//     })
+    // peer discovery, for debugging
+    node.on('peer:discovery', (foundPeerId) => {
+      console.log(`Peer ${myPeerId} discovered: ${foundPeerId.toB58String()}`)
+    })
 
-//     await node.start();
+    // listeners
+    node.pubsub.on('get-item-request', (msg) => {
+      console.log(P2PmessageToObject(msg));
 
-//     await node.pubsub.subscribe('get-item-request')
+      const messageBody = P2PmessageToObject(msg);
+      handleGetItemRequest(messageBody);
+    })
 
-//   } catch (e) {
-//     console.log(e);
-//   }
-// }
+    node.pubsub.on('post-item-request', (msg) => {
+      console.log(P2PmessageToObject(msg));
+
+      const messageBody = P2PmessageToObject(msg);
+      handlePostItemRequest(messageBody);
+    })
+
+    await node.start();
+
+    await node.pubsub.subscribe('get-item-request')
+    await node.pubsub.subscribe('post-item-request')
+
+  } catch (e) {
+    console.log(e);
+  }
+}
 
 async function main() {
-  // startPeer();
+  startPeer();
   startServer();
-
-  setTimeout(() => {
-    superagent.get('http://localhost:8080/item')
-      .query({ category: 'book' })
-      .end((err, res) => {
-        if (err) { return console.log(err); }
-        console.log(res.body);
-      });
-  }, 30000);
 }
 
 main()
