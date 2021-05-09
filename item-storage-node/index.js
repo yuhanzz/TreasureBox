@@ -27,7 +27,11 @@ function startServer() {
 
   app.post('/item', (req, res) => {
     const newItem = new Item({
-      name: req.body.name
+      category: req.body.category,
+      name: req.body.name,
+      description: req.body.description,
+      price: req.body.price,
+      seller: req.body.seller
     });
     newItem.save().then(item => res.status(204).json(item));
   });
