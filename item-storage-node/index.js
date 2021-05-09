@@ -147,24 +147,39 @@ async function startPeer() {
     })
 
     // listeners
-    node.pubsub.on('get-item-request', (msg) => {
+    node.pubsub.on('post_item_query', (msg) => {
       console.log(P2PmessageToObject(msg));
-
-      const messageBody = P2PmessageToObject(msg);
-      handleGetItemRequest(messageBody);
+      const queryMessageBody = P2PmessageToObject(msg);
+      const responseMessageBody = {
+        type: 'post_item_query_hit',
+        queryId: queryMessageBody['queryId'],
+        from: myPeerId
+      }
+      node.pubsub.publish(queryMessageBody['from'], ObjectToP2Pmessage(responseMessageBody))
     })
 
-    node.pubsub.on('post-item-request', (msg) => {
+    // node.pubsub.on('get_item_request', (msg) => {
+    //   console.log(P2PmessageToObject(msg));
+
+    //   const messageBody = P2PmessageToObject(msg);
+    //   handleGetItemRequest(messageBody);
+    // })
+
+    node.pubsub.on(myPeerId, (msg) => {
       console.log(P2PmessageToObject(msg));
 
       const messageBody = P2PmessageToObject(msg);
-      handlePostItemRequest(messageBody);
+      if (messageBody['type'] == 'post_item_request') {
+        handlePostItemRequest(messageBody);
+      }
     })
 
     await node.start();
 
-    await node.pubsub.subscribe('get-item-request')
-    await node.pubsub.subscribe('post-item-request')
+    await node.pubsub.subscribe('post_item_query')
+    // await node.pubsub.subscribe('get_item_request')
+    await node.pubsub.subscribe('post_item_request')
+    await node.pubsub.subscribe(myPeerId)
 
   } catch (e) {
     console.log(e);
