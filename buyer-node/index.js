@@ -79,7 +79,7 @@ function ensureResponseArrives(queryId, timeout) {
   }
 }
 
-function startServer() {
+async function startServer() {
   const app = express();
   const port = process.env.PORT || 8080;
 
@@ -93,8 +93,9 @@ function startServer() {
   });
 
   // Send search item query to other peers
-  app.post('/search', function (req, res) {
-    var queryMessageBody = req.body;
+  app.get('/search', async function (req, res) {
+    var queryMessageBody = req.query;
+    console.log(queryMessageBody)
     var queryId = generateQueryId();
     queryMessageBody['from'] = myPeerId;
     queryMessageBody['queryId'] = queryId;
@@ -109,13 +110,14 @@ function startServer() {
     node.pubsub.publish('search_item_query', ObjectToP2Pmessage(queryMessageBody));
 
     // Wait for response
-    ensureResponseArrives(queryId, 1000000).then(function () {
-      console.log("response received");
-      console.log(responseMap.get(queryId));
+    var itemList;
+    await ensureResponseArrives(queryId, 1000000).then(function () {
+      console.log("search result received");
+      itemList = responseMap.get(queryId);
+      console.log(itemList);
       responseMap.delete(queryId);
     });
-
-    res.status(204).send();
+    res.status(200).send(itemList);
   });
 
 
