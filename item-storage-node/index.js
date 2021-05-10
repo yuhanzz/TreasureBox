@@ -58,7 +58,6 @@ function handleGetItemRequest(messageBody) {
         from: myPeerId,
         data: res.body
       }
-      console.log("item fetched and sent: \n" + itemsResponse)
       node.pubsub.publish(requestorPeerId, ObjectToP2Pmessage(itemsResponse));
     });
 }
@@ -100,7 +99,6 @@ function startServer() {
   const Item = require('./models/Item');
 
   app.get('/item', (req, res) => {
-    console.log(req.query)
     Item.find(req.query).then(items => res.send(items));
   });
 
@@ -110,7 +108,9 @@ function startServer() {
       name: req.body.name,
       description: req.body.description,
       price: req.body.price,
-      seller: req.body.seller
+      seller: req.body.seller,
+      longitude: req.body.longitude,
+      latitude: req.body.latitude
     });
     newItem.save().then(item => res.status(204).json(item));
   });
@@ -167,8 +167,9 @@ async function startPeer() {
 
     // listeners
     node.pubsub.on('post_item_query', (msg) => {
-      console.log(P2PmessageToObject(msg));
+      console.log('message title: post_item_query')
       const queryMessageBody = P2PmessageToObject(msg);
+      console.log(messageBody);
       const responseMessageBody = {
         type: 'post_item_query_hit',
         queryId: queryMessageBody['queryId'],
@@ -178,16 +179,17 @@ async function startPeer() {
     })
 
     node.pubsub.on('get_item_query', (msg) => {
-      console.log('get_item_query')
-      console.log(P2PmessageToObject(msg));
+      console.log('message title: get_item_query')
       const messageBody = P2PmessageToObject(msg);
+      console.log(messageBody);
       handleGetItemRequest(messageBody);
     })
 
     node.pubsub.on(myPeerId, (msg) => {
-      console.log(P2PmessageToObject(msg));
-
+      console.log('message title: my peer id')
       const messageBody = P2PmessageToObject(msg);
+      console.log('message type: ' + messageBody['type'])
+      console.log(messageBody);
       if (messageBody['type'] == 'post_item_request') {
         handlePostItemRequest(messageBody);
       }

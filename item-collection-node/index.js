@@ -144,10 +144,9 @@ async function startPeer() {
 
     // listeners
     node.pubsub.on('search_item_query', (msg) => {
-      console.log('search_item_query')
-      console.log(P2PmessageToObject(msg));
-      
+      console.log('message title: search_item_query')
       const queryMessageBody = P2PmessageToObject(msg);
+      console.log(queryMessageBody);
       const responseMessageBody = {
         type: 'search_item_query_hit',
         queryId: queryMessageBody['queryId'],
@@ -158,9 +157,9 @@ async function startPeer() {
     })
 
     node.pubsub.on(myPeerId, (msg) => {
+      console.log('message title: my peer id')
       const messageBody = P2PmessageToObject(msg);
-
-      console.log(myPeerId)
+      console.log('message type: ' + messageBody['type'])
       console.log(messageBody)
 
       if (messageBody['type'] == 'search_item_request') {

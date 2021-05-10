@@ -21,6 +21,14 @@ const ItemSchema = new Schema({
   seller: {
     type: String,
     required: true
+  },
+  longitude: {
+    type: Number,
+    required: true
+  },
+  latitude: {
+    type: Number,
+    required: true
   }
 });
 
