@@ -13,6 +13,7 @@ const config = require('./config.json');
 const bootstrapMultiaddrs = config['bootstrapMultiaddrs'];
 
 const express = require('express');
+var cors = require('cors');
 const path = require('path');
 
 // Global variables
@@ -83,14 +84,11 @@ async function startServer() {
   const app = express();
   const port = process.env.PORT || 8080;
 
+  app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({
     extended: true
   }));
-
-  app.get('/', function (req, res) {
-    res.sendFile(path.join(__dirname, '/public/index.html'));
-  });
 
   // Send search item query to other peers
   app.get('/search', async function (req, res) {
