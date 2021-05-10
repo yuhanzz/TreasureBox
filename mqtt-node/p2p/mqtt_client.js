@@ -1,4 +1,18 @@
 var mqtt = require('mqtt')
+const publicIp = require('public-ip');
+var client  = mqtt.connect('mqtt://0.0.0.0')
+
+
+
+client.on('connect', function () {
+  console.log('----listener connected-----')  
+/*client.subscribe('presence', function (err) {
+    if (!err) {
+      client.publish('presence', 'Hello mqtt')
+    }
+  })*/
+})
+
 
 function postItem(sellerId, category, detail) {
   const topic = category + '/' + sellerId
@@ -26,6 +40,13 @@ function getItem(category) {
     client.end()
   })
 }
+(async () => {
+	console.log(await publicIp.v4());
+	//=> '46.5.21.123'
+
+	console.log(await publicIp.v6());
+	//=> 'fe80::200:f8ff:fe21:67cf'
+})();
 
 postItem(1234, 'book', 'Jane Austen')
 getItem('book')

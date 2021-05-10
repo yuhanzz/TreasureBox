@@ -5,8 +5,7 @@ services:
     hostname: p2p
     container_name: p2p
     build: ./p2p
-    networks:
-      - default
+    network_mode: "host"
     depends_on:
       - broker
 
@@ -16,10 +15,4 @@ services:
     container_name: broker
     volumes:
       - ./mosquitto/:/mosquitto
-    networks:
-      - default
-    ports:
-      - "1883:1883"
-
-networks:
-  default:
+    network_mode: "host"
