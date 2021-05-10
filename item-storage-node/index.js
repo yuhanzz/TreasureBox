@@ -68,7 +68,9 @@ function handlePostItemRequest(messageBody) {
     name: messageBody['name'],
     description: messageBody['description'],
     price: messageBody['price'],
-    seller: messageBody['seller']
+    seller: messageBody['seller'],
+    longitude: messageBody['longitude'],
+    latitude: messageBody['latitude']
   }
 
   superagent
@@ -169,7 +171,7 @@ async function startPeer() {
     node.pubsub.on('post_item_query', (msg) => {
       console.log('message title: post_item_query')
       const queryMessageBody = P2PmessageToObject(msg);
-      console.log(messageBody);
+      console.log(queryMessageBody);
       const responseMessageBody = {
         type: 'post_item_query_hit',
         queryId: queryMessageBody['queryId'],
