@@ -37,5 +37,16 @@ def insert():
         #
         return render_template("login.html")
 
+@app.route('/checkuser', methods=['post'])
+def checkuser():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        result = db.check_user(username, password)
+        if result == 0:
+            return render_template("mainpage.html")
+        else:
+            return render_template("loginfail.html")
+
 if __name__ == '__main__':
     app.run(debug=True)

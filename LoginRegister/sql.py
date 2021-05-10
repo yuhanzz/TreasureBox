@@ -21,6 +21,14 @@ def get_users():
     users = cur.fetchall()
     return users
 
+def check_user(username, password):
+    cursor.execute("SELECT * FROM Users WHERE username=%s AND password=%s", (username, password))
+    result = cursor.fetchall()
+    if len(result) == 0:
+        return 1
+    else:
+        return 0
+
 if __name__ == "__main__":
     conn = pymysql.connect(
         host = "cc-instance.c75aookn21ch.us-east-2.rds.amazonaws.com",
