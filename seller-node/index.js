@@ -22,7 +22,7 @@ var queryMap = new Map();
 var responseMap = new Map();
 var myPeerId;
 const p2pAddress = '/ip4/0.0.0.0/tcp/'
-var p2pPort = 15003
+var p2pPort = 15004
 
 // Helper functions
 function P2PmessageToObject(message) {
@@ -54,6 +54,9 @@ function handleQueryHit(messageBody) {
   if (queryMap.has(messageQueryId)) {
     const providerPeerId = messageBody['from'];
     const requestMessageBody = queryMap.get(messageQueryId);
+    console.log('sending request')
+    console.log(providerPeerId)
+    console.log(requestMessageBody)
     node.pubsub.publish(providerPeerId, ObjectToP2Pmessage(requestMessageBody));
     queryMap.delete(messageQueryId);
   }
@@ -61,7 +64,8 @@ function handleQueryHit(messageBody) {
 
 function handleSearchItemResponse(messageBody) {
   const queryId = messageBody['queryId'];
-  responseMap.set(queryId, messageBody);
+  const content = messageBody['content'];
+  responseMap.set(queryId, content);
 }
 
 // P2P response will be put into responseMap when received, this function wait for that condition. 
@@ -81,7 +85,7 @@ function ensureResponseArrives(queryId, timeout) {
 
 function startServer() {
   const app = express();
-  const port = process.env.PORT || 8080;
+  const port = process.env.PORT || 8081;
 
   app.use(express.json());
   app.use(express.urlencoded({
@@ -93,24 +97,33 @@ function startServer() {
   });
 
   // Send search item query to other peers
-  app.post('/search', function (req, res) {
-    var queryMessageBody = req.body;
-    var queryId = generateQueryId();
-    queryMessageBody['from'] = myPeerId;
-    queryMessageBody['queryId'] = queryId;
+  app.post('/sell', function (req, res) {
+    var queryId = generateQueryId()
 
-    var requestMessageBody = queryMessageBody;
-    requestMessageBody['type'] = 'search_item_request';
+    var queryMessageBody = {
+      from: myPeerId,
+      queryId: queryId
+    }
+
+    var requestMessageBody = req.body;
+    requestMessageBody['from'] = myPeerId;
+    requestMessageBody['queryId'] = queryId;
+    requestMessageBody['type'] = 'post_item_request';
 
     // Record the query in the queryMap
     queryMap.set(queryId, requestMessageBody);
 
     // Send p2p message
-    node.pubsub.publish('search_item_query', ObjectToP2Pmessage(queryMessageBody));
+    node.pubsub.publish('post_item_query', ObjectToP2Pmessage(queryMessageBody));
+
+    console.log('post_item_query')
+    console.log(queryMessageBody)
+    console.log('post_item_request')
+    console.log(requestMessageBody)
 
     // Wait for response
     ensureResponseArrives(queryId, 1000000).then(function () {
-      console.log("response received");
+      console.log(queryId + "response received");
       console.log(responseMap.get(queryId));
       responseMap.delete(queryId);
     });
@@ -168,10 +181,8 @@ async function startPeer() {
       console.log(P2PmessageToObject(msg));
 
       const messageBody = P2PmessageToObject(msg);
-      if (messageBody['type'] == 'search_item_query_hit') {
+      if (messageBody['type'] == 'post_item_query_hit') {
         handleQueryHit(messageBody);
-      } else if (messageBody['type'] == 'search_item_response') {
-        handleSearchItemResponse(messageBody);
       }
     })
 

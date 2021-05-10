@@ -1,0 +1,16 @@
+version: '3'
+services:
+  p2p:
+    container_name: item-storage-p2p
+    restart: always
+    build: .
+    ports:
+      - "8080:8080"
+      - "15003:15003"
+    external_links:
+      - mongo
+  mongo:
+    container_name: mongo
+    image: mongo
+    ports:
+      - '27017:27017'

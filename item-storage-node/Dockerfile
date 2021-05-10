@@ -11,9 +11,6 @@ COPY . /app
 
 RUN npm install
 
-EXPOSE 15003
+EXPOSE 8080 15003
 
-
-ENTRYPOINT ["node"]
-
-CMD ["peer.js"]
+CMD ["npm", "start"]
