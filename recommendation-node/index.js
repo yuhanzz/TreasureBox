@@ -18,6 +18,9 @@ const pubSubClient = new PubSub({ projectId: 'treasurebox-313320' });
 
 // Global variables
 var node;
+var request_index = 0;
+var queryMap = new Map();
+var responseMap = new Map();
 var myPeerId;
 const p2pAddress = '/ip4/0.0.0.0/tcp/'
 var p2pPort = 15005
@@ -31,6 +34,82 @@ function ObjectToP2Pmessage(message) {
     return uint8ArrayFromString(JSON.stringify(message));
 }
 
+// query ID is peerId + timestamp + request_index, example: QmPtbwUx8wLRwzZyFtWjTJvJCCv1ZonHcUdj1uTv373aKc-1619730560381-0
+function generateQueryId() {
+    const current_index = request_index;
+
+    // update request_index
+    if (request_index == Number.MAX_SAFE_INTEGER) {
+        request_index = 0;
+    } else {
+        request_index++;
+    }
+
+    return myPeerId + `-` + (new Date()).getTime() + `-` + current_index;
+}
+
+function handleQueryHit(messageBody) {
+    const messageQueryId = messageBody['queryId'];
+
+    if (queryMap.has(messageQueryId)) {
+        const providerPeerId = messageBody['from'];
+        const requestMessageBody = queryMap.get(messageQueryId);
+        node.pubsub.publish(providerPeerId, ObjectToP2Pmessage(requestMessageBody));
+        queryMap.delete(messageQueryId);
+    }
+}
+
+function handleSearchItemResponse(messageBody) {
+    const queryId = messageBody['queryId'];
+    responseMap.set(queryId, messageBody);
+}
+
+// P2P response will be put into responseMap when received, this function wait for that condition. 
+function ensureResponseArrives(queryId, timeout) {
+    var start = Date.now();
+    return new Promise(waitForResponse);
+
+    function waitForResponse(resolve, reject) {
+        if (responseMap.has(queryId))
+            resolve(responseMap.get(queryId));
+        else if (timeout && (Date.now() - start) >= timeout)
+            reject(new Error("timeout"));
+        else
+            setTimeout(waitForResponse.bind(this, resolve, reject), 30);
+    }
+}
+
+async function triggerNewRecommendation(messageBody) {
+    var queryId = generateQueryId();
+    var queryMessageBody = {
+        longitude: messageBody['longitude'],
+        latitude: messageBody['latitude'],
+        from: myPeerId,
+        queryId: queryId,
+        type: 'search_item_request'
+    }
+
+    var requestMessageBody = queryMessageBody;
+
+    // Record the query in the queryMap
+    queryMap.set(queryId, requestMessageBody);
+
+    // Send p2p message
+    node.pubsub.publish('search_item_query', ObjectToP2Pmessage(queryMessageBody));
+
+    // Wait for response
+    var itemList;
+    await ensureResponseArrives(queryId, 1000000).then(function () {
+        itemList = responseMap.get(queryId);
+        responseMap.delete(queryId);
+    });
+
+    // TODO: call recommendation with new item list
+    console.log('item list by geolocation');
+    console.log(itemList['data']);
+
+}
+
 async function addNewUser(userId) {
 
     const topic = pubSubClient.topic(userId);
@@ -39,7 +118,9 @@ async function addNewUser(userId) {
     try {
         await subscription.get({ autoCreate: true }, async (err, t) => {
             subscription.on('message', message => {
-                console.log('Received message:', message.data.toString());
+                const messageBody = JSON.parse(message.data.toString());
+                console.log('Received new location:', messageBody);
+                triggerNewRecommendation(messageBody);
             })
         })
     } catch (e) {
@@ -122,6 +203,10 @@ async function startPeer() {
             console.log(messageBody);
             if (messageBody['type'] == 'recommendation_request') {
                 handleInitialRecommendationRequest(messageBody)
+            } else if (messageBody['type'] == 'search_item_query_hit') {
+                handleQueryHit(messageBody);
+            } else if (messageBody['type'] == 'search_item_response') {
+                handleSearchItemResponse(messageBody);
             }
         })
 

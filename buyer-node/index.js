@@ -31,9 +31,10 @@ const p2pAddress = '/ip4/0.0.0.0/tcp/'
 var p2pPort = 15003
 
 var userInfo = {
-  longitude: '0',
-  latitude: '0',
-  userId: 'default@gmail.com'
+  longitude: 0,
+  latitude: 0,
+  userId: 'default@gmail.com',
+  myPeerId: null
 }
 
 // Helper functions
@@ -145,9 +146,7 @@ async function startServer() {
     // Wait for response
     var itemList;
     await ensureResponseArrives(queryId, 1000000).then(function () {
-      console.log("search result received");
       itemList = responseMap.get(queryId);
-      console.log(itemList);
       responseMap.delete(queryId);
     });
     res.status(200).send(itemList);
@@ -214,6 +213,7 @@ async function startPeer() {
   try {
     node = await createNode(bootstrapMultiaddrs)
     myPeerId = node.peerId.toB58String();
+    userInfo['myPeerId'] = myPeerId
 
     // peer discovery, for debugging
     node.on('peer:discovery', (foundPeerId) => {

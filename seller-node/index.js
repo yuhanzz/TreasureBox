@@ -62,12 +62,6 @@ function handleQueryHit(messageBody) {
   }
 }
 
-function handleSearchItemResponse(messageBody) {
-  const queryId = messageBody['queryId'];
-  const content = messageBody['content'];
-  responseMap.set(queryId, content);
-}
-
 // P2P response will be put into responseMap when received, this function wait for that condition. 
 function ensureResponseArrives(queryId, timeout) {
   var start = Date.now();
