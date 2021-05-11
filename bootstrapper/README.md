@@ -1,4 +1,3 @@
 ```
-docker build -t boostrapper:latest .
-docker run -it -p 15003:15003 boostrapper:latest
+sudo docker run -d -p 15003:15003 boostrapper:latest
 ```

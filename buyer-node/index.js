@@ -1,3 +1,4 @@
+// libp2p for p2p communication
 const Libp2p = require('libp2p')
 const TCP = require('libp2p-tcp')
 const Mplex = require('libp2p-mplex')
@@ -7,11 +8,15 @@ const Bootstrap = require('libp2p-bootstrap')
 const PubsubPeerDiscovery = require('libp2p-pubsub-peer-discovery')
 const uint8ArrayFromString = require('uint8arrays/from-string')
 const uint8ArrayToString = require('uint8arrays/to-string')
-
-
 const config = require('./config.json');
 const bootstrapMultiaddrs = config['bootstrapMultiaddrs'];
 
+// pubsub for recommendation
+require('dotenv').config()
+const { PubSub } = require('@google-cloud/pubsub');
+const pubSubClient = new PubSub({ projectId: 'treasurebox-313320' });
+
+// express for frontend communication
 const express = require('express');
 var cors = require('cors');
 const path = require('path');
@@ -184,9 +189,18 @@ async function startPeer() {
   }
 }
 
+async function updateGeolocation(topicName, content
+) {
+  const messageId = await pubSubClient.topic(topicName).publish(Buffer.from(content));
+  console.log(`Message ${messageId} published.`);
+}
+
 async function main() {
-  startPeer();
-  startServer();
+  await startPeer();
+  await startServer();
+  await updateGeolocation('topic1', '123');
+  await updateGeolocation('topic2', '321');
+  await updateGeolocation('topic2', '456');
 }
 
 main()
