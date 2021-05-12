@@ -33,8 +33,12 @@ var p2pPort = 15003
 var userInfo = {
   longitude: 0,
   latitude: 0,
-  userId: 'default@gmail.com',
+  userId: 'defaultatgmail.com',
   from: null  // peerId
+}
+
+var recommendationItems = {
+  data: []
 }
 
 // Helper functions
@@ -153,8 +157,7 @@ async function startServer() {
   });
 
   app.post('/init-recommendation', async function (req, res) {
-    await createGeolocationResource(req.body['userId']);
-    userInfo['userId'] = req.body['userId'];
+    await createGeolocationResource(userInfo['userId']);
     var queryMessageBody = {
       userId: userInfo['userId']
     };
@@ -172,6 +175,19 @@ async function startServer() {
     node.pubsub.publish('recommendation_query', ObjectToP2Pmessage(queryMessageBody));
 
     res.status(204).send();
+  });
+
+  app.get('/recommendation', function (req, res) {
+    const response = {
+      data: recommendationItems
+    }
+    res.status(200).send(response);
+  });
+
+  app.post('/geolocation', function (req, res) {
+    userInfo['longitude'] = req.body['longitude']
+    userInfo['latitude'] = req.body['latitude']
+    updateGeolocation(userInfo['userId'], JSON.stringify(userInfo));
   });
 
 
@@ -231,6 +247,8 @@ async function startPeer() {
         handleSearchItemResponse(messageBody);
       } else if (messageBody['type'] == 'initial_recommendation_response') {
         handleInitialRecommendationResponse(messageBody);
+      } else if (messageBody['type'] == 'new_recommendation') {
+        recommendationItems = messageBody['data'];
       }
     })
 

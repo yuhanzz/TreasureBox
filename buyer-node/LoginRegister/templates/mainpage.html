@@ -11,6 +11,55 @@
     <script>
         // wait for the DOM to be loaded
         $(function () {
+            function initRecommendation() {
+                // TODO: change to login user id
+                var userId = 'yz6238'
+                var ajax = $.ajax({
+                    type: "POST",
+                    url: "http://localhost:8080/init-recommendation",
+                    headers: {
+                        "Access-Control-Allow-Origin": "*"
+                    },
+                    data: {
+                        "userId": userId
+                    }
+                });
+            }
+
+            initRecommendation()
+
+            $("#update-geo-btn").click(function () {
+                var longitude = $("#longitude").val();
+                var latitude = $("#latitude").val();
+
+                var ajax = $.ajax({
+                    type: "POST",
+                    url: "http://localhost:8080/geolocation",
+                    headers: {
+                        "Access-Control-Allow-Origin": "*"
+                    },
+                    data: {
+                        "longitude": longitude,
+                        "latitude": latitude
+                    }
+                });
+                return false;
+            })
+
+            $("#update-recommendation-btn").click(function () {
+                var ajax = $.ajax({
+                    type: "GET",
+                    url: "http://localhost:8080/recommendation",
+                    headers: {
+                        "Access-Control-Allow-Origin": "*"
+                    },
+                    success: function (res) {
+                        updateRecommendationList(res);
+                    }
+                });
+                return false;
+            })
+
             $("#search-btn").click(function () {
                 var category = $("#category").val();
 
@@ -39,6 +88,16 @@
                 }
                 $('#searchResult').html(items.join(''));
             }
+
+            function updateRecommendationList(res) {
+                const data = res['data'];
+                var items = [];
+                for (var i in data) {
+                    var item = data[i];
+                    items.push('<pre id="' + item._id + '">' + JSON.stringify(item) + '</pre>');
+                }
+                $('#recommendationResult').html(items.join(''));
+            }
         })
     </script>
 </head>
@@ -63,6 +122,18 @@
     </form>
 
     <div id="searchResult">
+    </div>
+
+    <div>
+        <label>longitude </label>
+        <input type="text" id="longitude" name="longitude"><br><br>
+        <label>latitude </label>
+        <input type="text" id="latitude" name="latitude"><br><br>
+        <button type="submit" id="update-geo-btn">Update Geolocation</button>
+        <button type="submit" id="update-recommendation-btn">Update recommendation</button>
+    </div>
+
+    <div id="recommendationResult">
     </div>
 </body>
 
