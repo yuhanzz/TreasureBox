@@ -11,6 +11,8 @@ const uint8ArrayToString = require('uint8arrays/to-string')
 const config = require('./config.json');
 const bootstrapMultiaddrs = config['bootstrapMultiaddrs'];
 
+const geolib = require('geolib');
+
 // pubsub
 require('dotenv').config()
 const { PubSub } = require('@google-cloud/pubsub');
@@ -21,9 +23,10 @@ var node;
 var request_index = 0;
 var queryMap = new Map();
 var responseMap = new Map();
+var locationMap = new Map();
 var myPeerId;
 const p2pAddress = '/ip4/0.0.0.0/tcp/'
-var p2pPort = 15005
+var p2pPort = 15003
 
 // Helper functions
 function P2PmessageToObject(message) {
@@ -100,14 +103,38 @@ async function triggerNewRecommendation(messageBody) {
     // Wait for response
     var itemList;
     await ensureResponseArrives(queryId, 1000000).then(function () {
-        itemList = responseMap.get(queryId);
+        itemList = responseMap.get(queryId)['data'];
         responseMap.delete(queryId);
     });
 
-    // TODO: call recommendation with new item list
-    console.log('item list by geolocation');
-    console.log(itemList['data']);
+    // TODO: filter itemList with machine learning model
+    const recommendationMessage = {
+        type: 'new_recommendation',
+        data: itemList
+    }
 
+    console.log(recommendationMessage)
+    console.log('sending to ' + messageBody['from'])
+
+    node.pubsub.publish(messageBody['from'], ObjectToP2Pmessage(recommendationMessage));
+
+}
+
+function isLocationUpdated(messageBody) {
+    var isUpdated = true
+    const userId = messageBody['userId']
+    const longitude = messageBody['longitude']
+    const latitude = messageBody['latitude']
+    if (locationMap.has(userId) && locationMap.get(userId)['longitude'] == longitude && locationMap.get(userId)['latitude'] == latitude) {
+        isUpdated = false;
+    } else {
+        const newLoc = {
+            longitude: longitude,
+            latitude: latitude
+        }
+        locationMap.set(userId, newLoc)
+    }
+    return isUpdated;
 }
 
 async function addNewUser(userId) {
@@ -119,8 +146,10 @@ async function addNewUser(userId) {
         await subscription.get({ autoCreate: true }, async (err, t) => {
             subscription.on('message', message => {
                 const messageBody = JSON.parse(message.data.toString());
-                console.log('Received new location:', messageBody);
-                triggerNewRecommendation(messageBody);
+                if (isLocationUpdated(messageBody)) {
+                    console.log('Received new location:', messageBody);
+                    triggerNewRecommendation(messageBody);
+                }
             })
         })
     } catch (e) {

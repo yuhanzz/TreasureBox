@@ -34,7 +34,7 @@ var userInfo = {
   longitude: 0,
   latitude: 0,
   userId: 'default@gmail.com',
-  myPeerId: null
+  from: null  // peerId
 }
 
 // Helper functions
@@ -213,7 +213,7 @@ async function startPeer() {
   try {
     node = await createNode(bootstrapMultiaddrs)
     myPeerId = node.peerId.toB58String();
-    userInfo['myPeerId'] = myPeerId
+    userInfo['from'] = myPeerId
 
     // peer discovery, for debugging
     node.on('peer:discovery', (foundPeerId) => {
