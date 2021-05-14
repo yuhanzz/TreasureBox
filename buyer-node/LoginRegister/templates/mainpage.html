@@ -7,10 +7,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.form/4.3.0/jquery.form.min.js"
         integrity="sha384-qlmct0AOBiA2VPZkMY3+2WqkHtIQ9lSdAsAn5RUJD/3vA5MKDgSGcdmIv4ycVxyn"
         crossorigin="anonymous"></script>
+    <script src="https://cdn.ethers.io/lib/ethers-5.1.umd.min.js" type="text/javascript"></script>
 
     <script>
         // wait for the DOM to be loaded
         $(function () {
+            var searchedItems;
+            var recommendationItems;
+            var buyerAddress;
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+
+            (async () => {
+                try {
+                    buyerAddress = await signer.getAddress();
+                    console.log(buyerAddress);
+                } catch (e) {
+                    console.log(e);
+                }
+            })();
+
             function initRecommendation() {
                 // TODO: change to login user id
                 var userId = 'yz6238'
@@ -79,12 +95,43 @@
                 return false;
             })
 
+            $('#searchResult').on('click', 'button', function () {
+                var i = $(this).attr("data-index");
+                var item = searchedItems[i];
+                var _id = item._id;
+                var category = item.category;
+                var name = item.name;
+                var price = item.price;
+                var seller = item.seller;
+                alert(_id + '\n' + category + '\n' + name + '\n' + price + '\n' + seller);
+                return false;
+            });
+
             function updateSearchResult(res) {
-                const data = res['data'];
+                searchedItems = res['data'];
                 var items = [];
-                for (var i in data) {
-                    var item = data[i];
-                    items.push('<pre id="' + item._id + '">' + JSON.stringify(item) + '</pre>');
+                items.push(
+                    `<table>
+                        <thead>
+                            <tr>
+                                <td>category</td>
+                                <td>name</td>
+                                <td>description</td>
+                                <td>price(ether)</td>
+                                <td>click to buy</td>
+                            </tr>
+                        </thead>
+                        <tbody>`
+                );
+                for (var i in searchedItems) {
+                    var item = searchedItems[i];
+                    items.push(`<tr id ="` + item._id + `">
+                                <td name="category">` + item.category + `</td>
+                                <td name="name">` + item.name + `</td>
+                                <td name="description">` + item.description + `</td>
+                                <td name="price">` + item.price + `</td>
+                                <td><button name="buy" data-index="` + i + `">buy</button><td>
+                            </tr>`);
                 }
                 $('#searchResult').html(items.join(''));
             }
