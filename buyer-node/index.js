@@ -1,3 +1,4 @@
+// libp2p for p2p communication
 const Libp2p = require('libp2p')
 const TCP = require('libp2p-tcp')
 const Mplex = require('libp2p-mplex')
@@ -7,11 +8,15 @@ const Bootstrap = require('libp2p-bootstrap')
 const PubsubPeerDiscovery = require('libp2p-pubsub-peer-discovery')
 const uint8ArrayFromString = require('uint8arrays/from-string')
 const uint8ArrayToString = require('uint8arrays/to-string')
-
-
 const config = require('./config.json');
 const bootstrapMultiaddrs = config['bootstrapMultiaddrs'];
 
+// pubsub for recommendation
+require('dotenv').config()
+const { PubSub } = require('@google-cloud/pubsub');
+const pubSubClient = new PubSub({ projectId: 'treasurebox-313320' });
+
+// express for frontend communication
 const express = require('express');
 var cors = require('cors');
 const path = require('path');
@@ -24,6 +29,17 @@ var responseMap = new Map();
 var myPeerId;
 const p2pAddress = '/ip4/0.0.0.0/tcp/'
 var p2pPort = 15003
+
+var userInfo = {
+  longitude: 0,
+  latitude: 0,
+  userId: 'defaultatgmail.com',
+  from: null  // peerId
+}
+
+var recommendationItems = {
+  data: []
+}
 
 // Helper functions
 function P2PmessageToObject(message) {
@@ -49,6 +65,27 @@ function generateQueryId() {
   return myPeerId + `-` + (new Date()).getTime() + `-` + current_index;
 }
 
+async function createGeolocationResource(userId) {
+
+  try {
+    await pubSubClient.topic(userId).iam.getPolicy();
+  } catch (e) {
+    await pubSubClient.createTopic(userId);
+  }
+  try {
+    await pubSubClient.subscription(userId).getMetadata();
+  } catch (e) {
+    await pubSubClient.topic(userId).createSubscription(userId);
+  }
+}
+
+async function updateGeolocation(topicName, content) {
+  const topic = pubSubClient.topic(topicName);
+  await topic.get({ autoCreate: true }, async (err, t) => {
+    const messageId = await topic.publish(Buffer.from(content));
+  })
+}
+
 function handleQueryHit(messageBody) {
   const messageQueryId = messageBody['queryId'];
 
@@ -63,6 +100,10 @@ function handleQueryHit(messageBody) {
 function handleSearchItemResponse(messageBody) {
   const queryId = messageBody['queryId'];
   responseMap.set(queryId, messageBody);
+}
+
+function handleInitialRecommendationResponse(messageBody) {
+  updateGeolocation(userInfo['userId'], JSON.stringify(userInfo));
 }
 
 // P2P response will be put into responseMap when received, this function wait for that condition. 
@@ -93,7 +134,6 @@ async function startServer() {
   // Send search item query to other peers
   app.get('/search', async function (req, res) {
     var queryMessageBody = req.query;
-    console.log(queryMessageBody)
     var queryId = generateQueryId();
     queryMessageBody['from'] = myPeerId;
     queryMessageBody['queryId'] = queryId;
@@ -110,12 +150,44 @@ async function startServer() {
     // Wait for response
     var itemList;
     await ensureResponseArrives(queryId, 1000000).then(function () {
-      console.log("search result received");
       itemList = responseMap.get(queryId);
-      console.log(itemList);
       responseMap.delete(queryId);
     });
     res.status(200).send(itemList);
+  });
+
+  app.post('/init-recommendation', async function (req, res) {
+    await createGeolocationResource(userInfo['userId']);
+    var queryMessageBody = {
+      userId: userInfo['userId']
+    };
+    var queryId = generateQueryId();
+    queryMessageBody['from'] = myPeerId;
+    queryMessageBody['queryId'] = queryId;
+
+    var requestMessageBody = queryMessageBody;
+    requestMessageBody['type'] = 'recommendation_request';
+
+    // Record the query in the queryMap
+    queryMap.set(queryId, requestMessageBody);
+
+    // Send p2p message
+    node.pubsub.publish('recommendation_query', ObjectToP2Pmessage(queryMessageBody));
+
+    res.status(204).send();
+  });
+
+  app.get('/recommendation', function (req, res) {
+    const response = {
+      data: recommendationItems
+    }
+    res.status(200).send(response);
+  });
+
+  app.post('/geolocation', function (req, res) {
+    userInfo['longitude'] = req.body['longitude']
+    userInfo['latitude'] = req.body['latitude']
+    updateGeolocation(userInfo['userId'], JSON.stringify(userInfo));
   });
 
 
@@ -157,6 +229,7 @@ async function startPeer() {
   try {
     node = await createNode(bootstrapMultiaddrs)
     myPeerId = node.peerId.toB58String();
+    userInfo['from'] = myPeerId
 
     // peer discovery, for debugging
     node.on('peer:discovery', (foundPeerId) => {
@@ -168,10 +241,14 @@ async function startPeer() {
       console.log(P2PmessageToObject(msg));
 
       const messageBody = P2PmessageToObject(msg);
-      if (messageBody['type'] == 'search_item_query_hit') {
+      if (messageBody['type'] == 'search_item_query_hit' || messageBody['type'] == 'recommendation_query_hit') {
         handleQueryHit(messageBody);
       } else if (messageBody['type'] == 'search_item_response') {
         handleSearchItemResponse(messageBody);
+      } else if (messageBody['type'] == 'initial_recommendation_response') {
+        handleInitialRecommendationResponse(messageBody);
+      } else if (messageBody['type'] == 'new_recommendation') {
+        recommendationItems = messageBody['data'];
       }
     })
 
@@ -185,8 +262,8 @@ async function startPeer() {
 }
 
 async function main() {
-  startPeer();
-  startServer();
+  await startPeer();
+  await startServer();
 }
 
 main()

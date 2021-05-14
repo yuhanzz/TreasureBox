@@ -1,24 +1,22 @@
 {
-  "name": "item-storage-node",
+  "name": "recommendation-node",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.16.3",
+    "@google-cloud/pubsub": "^2.11.0",
+    "dotenv": "^9.0.2",
     "geolib": "^3.3.1",
     "libp2p": "^0.31.3",
     "libp2p-bootstrap": "^0.12.3",
     "libp2p-gossipsub": "^0.9.0",
     "libp2p-mplex": "^0.10.3",
     "libp2p-noise": "^3.0.0",
-    "libp2p-pubsub-peer-discovery": "^3.0.0",
-    "mongoose": "^5.2.7",
-    "superagent": "^6.1.0"
+    "libp2p-pubsub-peer-discovery": "^3.0.0"
   }
 }

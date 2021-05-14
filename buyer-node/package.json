@@ -9,7 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/pubsub": "^2.11.0",
     "cors": "^2.8.5",
+    "dotenv": "^9.0.2",
     "express": "^4.17.1",
     "libp2p": "^0.30.12",
     "libp2p-bootstrap": "^0.12.2",
