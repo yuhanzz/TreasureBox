@@ -44,7 +44,8 @@ def checkuser():
         password = request.form['password']
         result = db.check_user(username, password)
         if result == 0:
-            return render_template("mainpage.html")
+            userId = username;
+            return render_template("mainpage.html", value = userId)
         else:
             return render_template("loginfail.html")
 
