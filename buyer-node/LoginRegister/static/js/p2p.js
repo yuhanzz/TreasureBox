@@ -68,18 +68,6 @@ $(function () {
         return false;
     })
 
-    $('#searchResult').on('click', 'button', function () {
-        var i = $(this).attr("data-index");
-        var item = searchedItems[i];
-        var _id = item._id;
-        var category = item.category;
-        var name = item.name;
-        var price = item.price;
-        var seller = item.seller;
-        alert(_id + '\n' + category + '\n' + name + '\n' + price + '\n' + seller);
-        return false;
-    });
-
     function updateSearchResult(res) {
         searchedItems = res['data'];
         var items = [];
