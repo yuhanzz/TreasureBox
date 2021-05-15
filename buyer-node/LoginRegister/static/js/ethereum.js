@@ -161,7 +161,7 @@ $(function () {
             "type": "function",
             "constant": true
         }
-    ], '0x590660C69508a5B4f6e70e450516Bad17A7DD691', {  // TODO: change from ganache to ropsten
+    ], '0x590660C69508a5B4f6e70e450516Bad17A7DD691', {
         from: buyerEtherAccount, // default from address
     });
 
@@ -174,21 +174,21 @@ $(function () {
         var price = window.web3.utils.toWei(item.price.toString());
         var seller = item.seller;
 
-        // TODO: add an input box for entering shipping address
-        var shipping = '90 Columbus';
+        var shipping = $("#shippingInfo").val();
+        if (shipping == null || shipping == "") {
+            alert("Please enter shipping information before making order.");
+            return false;
+        }
 
         contractInstance.methods.makeOrder(category, name, shipping, price, seller).send({
             gas: 300000,
             from: buyerEtherAccount,
             value: price
-        })
-            .on('transactionHash', function (hash) {
-                console.log('hash');
-                console.log(hash);
-            });
-
+        }).then(function (receipt) {
+            alert('Order success!');
+            console.log(receipt);
+        });
         return false;
     });
-
 
 })

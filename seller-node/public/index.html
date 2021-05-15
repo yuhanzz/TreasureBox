@@ -7,39 +7,22 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.form/4.3.0/jquery.form.min.js"
     integrity="sha384-qlmct0AOBiA2VPZkMY3+2WqkHtIQ9lSdAsAn5RUJD/3vA5MKDgSGcdmIv4ycVxyn"
     crossorigin="anonymous"></script>
+  <script src="js/web3.min.js"></script>
 
   <script>
-    // wait for the DOM to be loaded
-    $(function () {
-      $("#sell-btn").click(function () {
-        var category = $("#category").val();
-        var name = $("#name").val();
-        var description = $("#description").val();
-        var price = $("#price").val();
-        var seller = $("#seller").val();
-        var longitude = $("#longitude").val();
-        var latitude = $("#latitude").val();
-
-        var ajax = $.ajax({
-          type: "POST",
-          url: "/sell",
-          data: {
-            "category": category,
-            "name": name,
-            "description": description,
-            "price": price,
-            "seller": seller,
-            "longitude": longitude,
-            "latitude": latitude
-          }
-        });
-        return false;
-      })
-    })
+    //global varaibles
+    var sellerEtherAccounts;
+    var seller;
   </script>
+
+  <script src="js/ethereum.js"></script>
+  <script src="js/p2p.js"></script>
 </head>
 
 <body>
+  <div>
+    <p id='displayEtherAccount'></p>
+  </div>
 
   <h1>Sell Item</h1>
 
@@ -52,14 +35,18 @@
     <input type="text" id="description" name="description"><br><br>
     <label>price </label>
     <input type="text" id="price" name="price"><br><br>
-    <label>seller </label>
-    <input type="text" id="seller" name="seller"><br><br>
     <label>longitude </label>
     <input type="text" id="longitude" name="longitude"><br><br>
     <label>latitude </label>
     <input type="text" id="latitude" name="latitude"><br><br>
     <button type="submit" id="sell-btn">Sell</button>
   </form>
+
+  <h1>Sold Items</h1>
+  <button id="retrieve">Retrieve</button>
+
+  <div id="retrieveResult">
+  </div>
 
 </body>
 
