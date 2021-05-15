@@ -29,6 +29,11 @@ const ItemSchema = new Schema({
   latitude: {
     type: Number,
     required: true
+  },
+  onHold: {
+    type: Boolean,
+    default: "false",
+    required: false
   }
 });
 

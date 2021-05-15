@@ -111,7 +111,7 @@ function startServer() {
 	console.log('current latitude:' + currentLatitude)
 	console.log('-----all items-----')
 	console.log(items)
-        const filtered_items = items.filter(item =>
+        var found_items = items.filter(item =>
           geolib.isPointWithinRadius(
             { latitude: currentLatitude, longitude: currentLongitude },
             { latitude: item.latitude, longitude: item.longitude },
@@ -119,12 +119,20 @@ function startServer() {
             20000
           )
         );
+	var available_items = found_items.filter(item => item['onHold'] == false);
 	console.log('-----filtered items-----')
-	console.log(filtered_items)
-        res.send(filtered_items);
+	console.log(available_items);
+        res.send(available_items);
       })
     } else {
-      Item.find(req.query).then(items => res.send(items));
+      Item.find(req.query).then(items => {
+	console.log('-----all items-----')
+	console.log(items)
+	var available_items = items.filter(item => item['onHold'] == false);
+	console.log('-----filtered items-----')
+        console.log(available_items)
+	res.send(available_items);
+      });
     }
   });
 
