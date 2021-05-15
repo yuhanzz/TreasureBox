@@ -102,6 +102,11 @@ function handleSearchItemResponse(messageBody) {
   responseMap.set(queryId, messageBody);
 }
 
+function handleHoldItemResponse(messageBody) {
+  const queryId = messageBody['queryId'];
+  responseMap.set(queryId, messageBody);
+}
+
 function handleInitialRecommendationResponse(messageBody) {
   updateGeolocation(userInfo['userId'], JSON.stringify(userInfo));
 }
@@ -130,6 +135,31 @@ async function startServer() {
   app.use(express.urlencoded({
     extended: true
   }));
+
+  app.post('/hold-item', async function (req, res) {
+    var messageBody = req.body;
+    const queryId = generateQueryId();
+    messageBody['from'] = myPeerId;
+    messageBody['queryId'] = queryId;
+    node.pubsub.publish('hold_item_request', ObjectToP2Pmessage(messageBody));
+
+    var result;
+    await ensureResponseArrives(queryId, 1000000).then(function () {
+      result = responseMap.get(queryId);
+      responseMap.delete(queryId);
+    });
+    res.status(200).send(result);
+  });
+
+  app.post('/unhold-item', function (req, res) {
+    node.pubsub.publish('unhold_item_request', ObjectToP2Pmessage(req.body));
+    res.status(200).send();
+  });
+
+  app.post('/delete-item', function (req, res) {
+    node.pubsub.publish('delete_item_request', ObjectToP2Pmessage(req.body));
+    res.status(200).send();
+  });
 
   // Send search item query to other peers
   app.get('/search', async function (req, res) {
@@ -249,6 +279,8 @@ async function startPeer() {
         handleInitialRecommendationResponse(messageBody);
       } else if (messageBody['type'] == 'new_recommendation') {
         recommendationItems = messageBody['data'];
+      } else if (messageBody['type'] == 'hold_item_response') {
+        handleHoldItemResponse(messageBody);
       }
     })
 

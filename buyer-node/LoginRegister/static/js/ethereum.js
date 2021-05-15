@@ -178,17 +178,68 @@ $(function () {
         if (shipping == null || shipping == "") {
             alert("Please enter shipping information before making order.");
             return false;
-        }
+        } else {
 
-        contractInstance.methods.makeOrder(category, name, shipping, price, seller).send({
-            gas: 300000,
-            from: buyerEtherAccount,
-            value: price
-        }).then(function (receipt) {
-            alert('Order success!');
-            console.log(receipt);
-        });
-        return false;
+            // call p2p part to hold the item
+            $.ajax({
+                type: "POST",
+                url: "http://localhost:8080/hold-item",
+                headers: {
+                    "Access-Control-Allow-Origin": "*"
+                },
+                data: {
+                    "_id": _id,
+                    "seller": seller,
+                },
+                success: function (res) {
+                    if (res.result == "failure") {
+                        alert('Item sold.');
+                        return false;
+                    }
+
+                    contractInstance.methods.makeOrder(category, name, shipping, price, seller).send({
+                        gas: 300000,
+                        from: buyerEtherAccount,
+                        value: price
+                    })
+                        .on('error', function (error) {
+                            // unhold the item if user rejected
+                            $.ajax({
+                                type: "POST",
+                                url: "http://localhost:8080/unhold-item",
+                                headers: {
+                                    "Access-Control-Allow-Origin": "*"
+                                },
+                                data: {
+                                    "_id": _id,
+                                    "seller": seller,
+                                }
+                            });
+                            return false;
+                        })
+                        .then(function (receipt) {
+                            if (receipt) {
+                                // delete the item if successful
+                                $.ajax({
+                                    type: "POST",
+                                    url: "http://localhost:8080/delete-item",
+                                    headers: {
+                                        "Access-Control-Allow-Origin": "*"
+                                    },
+                                    data: {
+                                        "_id": _id,
+                                        "seller": seller,
+                                    }
+                                });
+                                alert('Order success!');
+                                console.log(receipt);
+                            }
+                        });
+                    return false;
+                }
+            });
+            return false;
+        }
     });
 
 })
