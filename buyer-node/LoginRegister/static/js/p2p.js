@@ -50,7 +50,14 @@ $(function () {
     })
 
     $("#search-btn").click(function () {
-        var category = $("#category").val();
+        var jsonData;
+        if ($("#category").val() == null || $("#category").val() == "") {
+            jsonData = {};
+        } else {
+            jsonData = {
+                "category": $("#category").val()
+            };
+        }
 
         var ajax = $.ajax({
             type: "GET",
@@ -58,9 +65,7 @@ $(function () {
             headers: {
                 "Access-Control-Allow-Origin": "*"
             },
-            data: {
-                "category": category
-            },
+            data: jsonData,
             success: function (res) {
                 updateSearchResult(res);
             }
