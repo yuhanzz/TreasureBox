@@ -19,39 +19,79 @@
     <script src="{{url_for('static', filename='js/web3.min.js')}}"></script>
     <script src="{{url_for('static', filename='js/ethereum.js')}}"></script>
     <script src="{{url_for('static', filename='js/p2p.js')}}"></script>
+    <link rel="stylesheet" type="text/css" href="static/css/mainpage.css">
 </head>
 
 <body>
+    <div class="body1">
     <div>
-        <p>Hi {{value}} !</p>
-        <p>Welcome to the Home Page</p>
-        <p id='displayEtherAccount'></p>
-        <label>shipping information </label>
-        <input type="text" id="shippingInfo"><br><br>
+        <img src="static/image/img_avatar2.png" alt="Avatar" class="avatar2">
+        <h1>Hi {{value}} !</h1>
+        <p class="textMsg">Welcome to the Home Page</p>
+        <p id='displayEtherAccount' class="textMsg"></p>
+        <label class="textMsg">shipping information </label>
+        <input type="text" id="shippingInfo" class="searchTerm"><br><br>
     </div>
-
     <div>
         <form action="/">
-            <input value="logout" type="submit">
+            <input value="logout" type="submit" class="LogoutBtn">
         </form>
+        <hr>
+    </div>
     </div>
 
     <h1>Search Item</h1>
 
     <form id="searchForm">
         <label>category </label>
-        <input type="text" id="category" name="category"><br><br>
+        <input type="text" id="category" name="category" class="searchTerm"><br><br>
         <button type="submit" id="search-btn">Search</button>
     </form>
 
+
     <div id="searchResult">
-    </div>
+        <table>
+        <thead>
+        <tr>
+            <th>category</th>
+            <th>name</th>
+            <th>description</th>
+            <th>price(ether)</th>
+            <th>click to buy</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr id="60a03a356d397e00121064f6">
+            <td name="category">book</td>
+            <td name="name">fwegwe</td>
+            <td name="description">gwgwr</td>
+            <td name="price">0.001</td>
+            <td><button name="buy" data-index="0" class="buyBtn">buy</button></td><td>
+        </td></tr>
+        <tr id="60a03f7d6d397e00121064f7">
+            <td name="category">book</td>
+            <td name="name">dsahjk</td>
+            <td name="description">idosanjkdsa</td>
+            <td name="price">0.001</td>
+            <td><button name="buy" data-index="1" class="buyBtn">buy</button></td><td>
+        </td></tr>
+        <tr id="60a03f8d6d397e00121064f8">
+            <td name="category">book</td>
+            <td name="name">dsanmewq</td>
+            <td name="description">dsaio</td>
+            <td name="price">0.001</td>
+            <td><button name="buy" data-index="2" class="buyBtn">buy</button></td>
+            <td>
+        </td></tr>
+        </tbody></table></div>
+
+    <div>
 
     <div>
         <label>longitude </label>
-        <input type="text" id="longitude" name="longitude"><br><br>
+        <input type="text" id="longitude" name="longitude" class="searchTerm"><br><br>
         <label>latitude </label>
-        <input type="text" id="latitude" name="latitude"><br><br>
+        <input type="text" id="latitude" name="latitude" class="searchTerm"><br><br>
         <button type="submit" id="update-geo-btn">Update Geolocation</button>
         <button type="submit" id="update-recommendation-btn">Update recommendation</button>
     </div>
