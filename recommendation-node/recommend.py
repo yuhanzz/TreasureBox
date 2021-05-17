@@ -5,7 +5,7 @@ import pickle
 
 def preprocess(item,user):
     items, categories, prices = [], [], []
-    for i in json:
+    for i in item:
         items.append(i['_id'])
         categories.append(i['category'])
         prices.append(i['price'])
