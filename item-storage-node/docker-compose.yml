@@ -3,7 +3,7 @@ services:
   p2p:
     container_name: item-storage-p2p
     restart: always
-    build: .
+    image: yuhanzzz/item-storage-node_p2p:latest
     ports:
       - "8080:8080"
       - "15003:15003"
@@ -11,6 +11,7 @@ services:
       - mongo
   mongo:
     container_name: mongo
+    restart: always
     image: mongo
     ports:
       - '27017:27017'

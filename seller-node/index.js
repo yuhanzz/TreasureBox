@@ -54,9 +54,6 @@ function handleQueryHit(messageBody) {
   if (queryMap.has(messageQueryId)) {
     const providerPeerId = messageBody['from'];
     const requestMessageBody = queryMap.get(messageQueryId);
-    console.log('sending request')
-    console.log(providerPeerId)
-    console.log(requestMessageBody)
     node.pubsub.publish(providerPeerId, ObjectToP2Pmessage(requestMessageBody));
     queryMap.delete(messageQueryId);
   }
@@ -111,18 +108,6 @@ function startServer() {
     // Send p2p message
     node.pubsub.publish('post_item_query', ObjectToP2Pmessage(queryMessageBody));
 
-    console.log('post_item_query')
-    console.log(queryMessageBody)
-    console.log('post_item_request')
-    console.log(requestMessageBody)
-
-    // Wait for response
-    ensureResponseArrives(queryId, 1000000).then(function () {
-      console.log(queryId + "response received");
-      console.log(responseMap.get(queryId));
-      responseMap.delete(queryId);
-    });
-
     res.status(204).send();
   });
 
@@ -173,9 +158,9 @@ async function startPeer() {
 
     // listeners
     node.pubsub.on(myPeerId, (msg) => {
-      console.log(P2PmessageToObject(msg));
-
+      console.log("message title: my peer id");
       const messageBody = P2PmessageToObject(msg);
+      console.log(messageBody);
       if (messageBody['type'] == 'post_item_query_hit') {
         handleQueryHit(messageBody);
       }
