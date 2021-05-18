@@ -1,0 +1,12 @@
+{
+    "type": "service_account",
+    "project_id": "treasurebox-313320",
+    "private_key_id": "4047622b5db9189c2402bb6b26d9d3eb85735285",
+    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCcPZpaWELVwW9I\nyFKvsSd5sFnh/1irnw6223QhNKK7n/40vO6QklQXHIVHWUZq0FhUjCx56DgGmGOO\n85qb0JlxE3cNQc1Foy/fIZrFCB03GwFHk/L1r9d93KZAoIRGQW5FkMkqAGeajATK\n5CjRsYuik2Gfj1w9MBwa0ivw1cGd9pMpZINz4lBlDfr1Yug7y11zyXbl7xhQAMR3\nO8tUJSHpgdQA01i28vdilTfVsfAp957Frw1xVeEbTE9srqDdY5MITumSUXouFsxy\n9HhPxdEMvtQtdg4RjHL5WrBC4t84ZW/dll8ftAs/4A5tzcm0oBwSkgG5vzXekLus\nWvk53ts7AgMBAAECggEAKpEB/4EyXEhCCGNDW8h5B8dLBa5quv8vpBPv9KgBefqh\n6D5dBJhJPq6vhPvGmo0+s3IpH+FreiiEX0rxIWhYlZ0G/16hDUrjXPgr0WhfhUbf\nN2AQfm002X6G8O6KexWSdHN4yu+nSkzBdYFpuY+Uimt62lzVdXoo/gmqnQevo1hA\nR745YW0/yg4yJCoRmqLZ4esaqbG7+TnINtXeGrGTwoA0q64xONR9ARaV0Tnne3UR\nybORH48/s+sv7lasHmXlu9ltYCqJgAZK8/jfIZueGG6yAnUONYTfE5i8DYzCDZqD\nDqa9IF4o5lM3WJCYaxNqnlamKffXGSg1RhDWzBrAOQKBgQDM8xndJQLvavhlSBoM\n0x/4sd2g9hCWyyhyw9vQIUzhEce79fCWImffdk0AmyKKIL0jTZtn5/CPqmJkTJzF\ne5IkYoTZw9FJglRX8uvBhl4sZsoawdNNg8ItXz8/pYZdouz8kqPP9UroPrY9Xhd2\ny7gZJTJGGxwQ0KV0lUPW/qek5wKBgQDDKIF9WajrylNZR//7VDBPp9r+sAvYuLVB\n0enA1gbjLFlBJoCP+2uuj6bnRR3gbpaVlNGcDsKJyTFSjNAN+pnByAaFS7abRzZN\n3toWFStBxk4KveeXo956wnEgjH0SpdJd+GEmNkc5ZKMEoyXXyDul0lRFFLVWnrJs\nJjcNK4W4jQKBgQC5F3etO8bJ2G6acaJtIKLIJEJHItLajIFsHCxBbEGVJkyfGL79\np/btXlaujGyGGIkX//ewwEyGQtd3Q6V1yGK0j3DxhiJV4+kuQIngDeyw5ufxgEjH\nwY21Ekb5wRB3MjQa6ogcwKe01SYaiAZi2BrcQraDj+op2XUDs+Y/nV5j0wKBgQDC\ntKHkVtSyUoyvkabxr//3KOfTm/5lvXqRbYWCb8Y1ViTCXFB91gCMCyQgrpNtO8ge\n+nfZ89vhLgp4aqaUm8ZVUGQ5Dt3js7uZG1KIH5ylpdxs2SS65LHt1hqZt7B9L1Vf\njZQXVKXgu+fsk30I+OuRt/N9bHizL+ehAMuB5z8lbQKBgQCIlnSyhObC2btA2P5b\nx6Xe7HvWWwPlnmNrHz1VHp3H4apb8XsuuX1/ZayqtADYqqEq/9p9uxN5cHyrrE3P\nQfmb01U86be/YxKK2unrwqmfC6EiwQxkCpYkKSbZkbribP9MTtnxyvHdVJaVZ1GS\nJ8I4+zl9HjCloQlZDBUD5KQ+dg==\n-----END PRIVATE KEY-----\n",
+    "client_email": "treasurebox-users@treasurebox-313320.iam.gserviceaccount.com",
+    "client_id": "117691452317594333522",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/treasurebox-users%40treasurebox-313320.iam.gserviceaccount.com"
+  }

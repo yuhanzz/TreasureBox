@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" type="text/css" href="static/css/register.css">
+</head>
+<body>
+<div class="container">
+    <h1>Register</h1>
+    <p>Please fill in this form to create an account.</p>
+    <hr>
+    <form action="/insert" method="post">
+        <label>USERNAME:</label><br>
+        <input type="text" name="username" id="username"><br><br>
+        <label>PASSWORD:</label><br>
+        <input type="password" name="password" id="password"><br><br>
+        <label>FIRSTNAME:</label><br>
+        <input type = "text" name="firstname" id="firstname"><br><br>
+        <label>LASTNAME:</label><br>
+        <input type = "text" name="lastname" id="lastname"><br><br>
+        <label>GENDER:</label><br>
+        <input type = "text" name="gender" id="gender"><br><br>
+        <label>AGE:</label><br>
+        <input type = "text" name="age" id="age"><br><br>
+        <input type="submit" value="CREATE USER" class="registerbtn">
+    </form>
+</div>
+
+</body>
+</html>

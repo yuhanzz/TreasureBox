@@ -1,0 +1,19 @@
+version: '3'
+services:
+  p2p:
+    container_name: buyer-p2p
+    restart: always
+    build: ./p2p
+    ports:
+      - '15003:15003'
+      - '8080:8080'
+    external_links:
+      - ml
+  browser:
+    container_name: buyer-browser
+    restart: always
+    build: ./browser
+    ports:
+      - '5000:5000'
+    external_links:
+      - p2p
