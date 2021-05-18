@@ -57,7 +57,7 @@ $(function () {
             };
         }
 
-        var ajax = $.ajax({
+        $.ajax({
             type: "GET",
             url: "http://localhost:8080/search",
             headers: {
@@ -82,6 +82,8 @@ $(function () {
                                 <td>name</td>
                                 <td>description</td>
                                 <td>price(ether)</td>
+                                <td>longitude</td>
+                                <td>latitude</td>
                                 <td>click to buy</td>
                             </tr>
                         </thead>
@@ -94,18 +96,44 @@ $(function () {
                                 <td name="name">` + item.name + `</td>
                                 <td name="description">` + item.description + `</td>
                                 <td name="price">` + item.price + `</td>
-                                <td><button name="buy" data-index="` + i + `">buy</button><td>
+                                <td name="longitude">` + item.longitude + `</td>
+                                <td name="latitude">` + item.latitude + `</td>
+                                <td><button name="buy" data-index="` + i + `" class="buyBtn">buy</button><td>
                             </tr>`);
         }
         $('#searchResult').html(items.join(''));
     }
 
     function updateRecommendationList(res) {
-        const data = res['data'];
+
+        recommendationItems = res['data'];
         var items = [];
-        for (var i in data) {
-            var item = data[i];
-            items.push('<pre id="' + item._id + '">' + JSON.stringify(item) + '</pre>');
+        items.push(
+            `<table>
+                        <thead>
+                            <tr>
+                                <td>category</td>
+                                <td>name</td>
+                                <td>description</td>
+                                <td>price(ether)</td>
+                                <td>longitude</td>
+                                <td>latitude</td>
+                                <td>click to buy</td>
+                            </tr>
+                        </thead>
+                        <tbody>`
+        );
+        for (var i in recommendationItems) {
+            var item = recommendationItems[i];
+            items.push(`<tr id ="` + item._id + `">
+                                <td name="category">` + item.category + `</td>
+                                <td name="name">` + item.name + `</td>
+                                <td name="description">` + item.description + `</td>
+                                <td name="price">` + item.price + `</td>
+                                <td name="longitude">` + item.longitude + `</td>
+                                <td name="latitude">` + item.latitude + `</td>
+                                <td><button name="buy" data-index="` + i + `" class="buyBtn">buy</button><td>
+                            </tr>`);
         }
         $('#recommendationResult').html(items.join(''));
     }
