@@ -23,7 +23,6 @@ var node;
 var request_index = 0;
 var queryMap = new Map();
 var responseMap = new Map();
-var locationMap = new Map();
 var myPeerId;
 const p2pAddress = '/ip4/0.0.0.0/tcp/'
 var p2pPort = 15003
@@ -136,38 +135,18 @@ async function triggerNewRecommendation(messageBody) {
 
 }
 
-function isLocationUpdated(messageBody) {
-    var isUpdated = true
-    const userId = messageBody['userId']
-    const longitude = messageBody['longitude']
-    const latitude = messageBody['latitude']
-    if (locationMap.get(userId) == null || locationMap.get(userId)['longitude'] != longitude || locationMap.get(userId)['latitude'] != latitude) {
-        const newLoc = {
-            longitude: longitude,
-            latitude: latitude
-        }
-        locationMap.set(userId, newLoc)
-    } else {
-        isUpdated = false;
-    }
-    return isUpdated;
-}
-
 async function addNewUser(userId) {
 
     const topic = pubSubClient.topic(userId);
     const subscription = topic.subscription(userId);
-    locationMap.set(userId, null);
 
     try {
         await subscription.get({ autoCreate: true }, async (err, t) => {
             subscription.on('message', message => {
                 console.log(message.data.toString())
                 const messageBody = JSON.parse(message.data.toString());
-                if (isLocationUpdated(messageBody)) {
-                    console.log('Received new location:', messageBody);
-                    triggerNewRecommendation(messageBody);
-                }
+                console.log('Received new location:', messageBody);
+                triggerNewRecommendation(messageBody);
                 message.ack();
             })
         })

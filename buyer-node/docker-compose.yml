@@ -5,17 +5,8 @@ services:
     restart: always
     build: ./p2p
     network_mode: "host"
-    # ports:
-    #  - '15003:15003'
-    #  - '8080:8080'
-    # external_links:
-    #  - ml
   browser:
     container_name: buyer-browser
     restart: always
     build: ./browser
     network_mode: "host"
-    #ports:
-    #  - '5000:5000'
-    # external_links:
-    #  - p2p
