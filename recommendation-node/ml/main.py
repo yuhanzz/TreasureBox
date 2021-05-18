@@ -17,4 +17,4 @@ def evaluate():
         return jsonify({"recommend":list(recommend_list)})
 
 if __name__ == '__main__':
-    app.run(debug=True,port=9090)
+    app.run(host='0.0.0.0', debug=True, port=9090)

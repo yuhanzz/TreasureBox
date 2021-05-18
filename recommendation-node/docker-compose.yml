@@ -1,0 +1,18 @@
+version: '3'
+services:
+  p2p:
+    container_name: recommendation-p2p
+    restart: always
+    build: ./p2p
+    ports:
+      - '15003:15003'
+    external_links:
+      - ml
+  ml:
+    container_name: recommendation-ml
+    restart: always
+    build: ./ml
+    ports:
+      - '9090:9090'
+    external_links:
+      - p2p
