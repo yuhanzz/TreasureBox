@@ -113,7 +113,7 @@ async function triggerNewRecommendation(messageBody) {
     }
 
     // filter itemList with machine learning model
-    superagent.post('http://localhost:9090/recommendation')
+    superagent.post('http://ml:9090/recommendation')
         .send(messageToFlask)
         .end((err, res) => {
             if (err) { return console.log(err); }
