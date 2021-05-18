@@ -183,7 +183,7 @@ $(function () {
             // call p2p part to hold the item
             $.ajax({
                 type: "POST",
-                url: "http://p2p:8080/hold-item",
+                url: document.location.protocol + "//" + document.location.hostname + ":8080/hold-item",
                 headers: {
                     "Access-Control-Allow-Origin": "*"
                 },
@@ -206,7 +206,7 @@ $(function () {
                             // unhold the item if user rejected
                             $.ajax({
                                 type: "POST",
-                                url: "http://p2p:8080/unhold-item",
+                                url: document.location.protocol + "//" + document.location.hostname + ":8080/unhold-item",
                                 headers: {
                                     "Access-Control-Allow-Origin": "*"
                                 },
@@ -222,7 +222,7 @@ $(function () {
                                 // delete the item if successful
                                 $.ajax({
                                     type: "POST",
-                                    url: "http://p2p:8080/delete-item",
+                                    url: document.location.protocol + "//" + document.location.hostname + ":8080/delete-item",
                                     headers: {
                                         "Access-Control-Allow-Origin": "*"
                                     },
