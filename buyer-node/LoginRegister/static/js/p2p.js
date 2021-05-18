@@ -1,9 +1,7 @@
 $(function () {
 
     function initRecommendation() {
-        // TODO: change to login user id
-        var userId = 'yz6238'
-        var ajax = $.ajax({
+        $.ajax({
             type: "POST",
             url: "http://localhost:8080/init-recommendation",
             headers: {
@@ -21,7 +19,7 @@ $(function () {
         var longitude = $("#longitude").val();
         var latitude = $("#latitude").val();
 
-        var ajax = $.ajax({
+        $.ajax({
             type: "POST",
             url: "http://localhost:8080/geolocation",
             headers: {

@@ -19,7 +19,6 @@ const pubSubClient = new PubSub({ projectId: 'treasurebox-313320' });
 // express for frontend communication
 const express = require('express');
 var cors = require('cors');
-const path = require('path');
 
 // Global variables
 var node;
@@ -187,6 +186,7 @@ async function startServer() {
   });
 
   app.post('/init-recommendation', async function (req, res) {
+    userInfo['userId'] = req.body.userId;
     await createGeolocationResource(userInfo['userId']);
     var queryMessageBody = {
       userId: userInfo['userId']

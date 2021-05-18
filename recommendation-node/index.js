@@ -11,7 +11,7 @@ const uint8ArrayToString = require('uint8arrays/to-string')
 const config = require('./config.json');
 const bootstrapMultiaddrs = config['bootstrapMultiaddrs'];
 
-const geolib = require('geolib');
+const superagent = require('superagent');
 
 // pubsub
 require('dotenv').config()
@@ -107,14 +107,30 @@ async function triggerNewRecommendation(messageBody) {
         responseMap.delete(queryId);
     });
 
-    // TODO: filter itemList with machine learning model
+    const messageToFlask = {
+        username: messageBody['userId'],
+        data: itemList
+    }
+
+    // filter itemList with machine learning model
+    superagent.post('http://localhost:9090/recommendation')
+        .send(messageToFlask)
+        .end((err, res) => {
+            if (err) { return console.log(err); }
+            var recommendedIds = res.body['recommend'];
+
+            itemList.filter((item) => item.id in recommendedIds);
+
+            console.log('filtered by machine learning')
+            console.log(itemList)
+        });
+
+
     const recommendationMessage = {
         type: 'new_recommendation',
         data: itemList
     }
 
-    console.log(recommendationMessage)
-    console.log('sending to ' + messageBody['from'])
 
     node.pubsub.publish(messageBody['from'], ObjectToP2Pmessage(recommendationMessage));
 
@@ -125,14 +141,14 @@ function isLocationUpdated(messageBody) {
     const userId = messageBody['userId']
     const longitude = messageBody['longitude']
     const latitude = messageBody['latitude']
-    if (locationMap.has(userId) && locationMap.get(userId)['longitude'] == longitude && locationMap.get(userId)['latitude'] == latitude) {
-        isUpdated = false;
-    } else {
+    if (locationMap.get(userId) == null || locationMap.get(userId)['longitude'] != longitude || locationMap.get(userId)['latitude'] != latitude) {
         const newLoc = {
             longitude: longitude,
             latitude: latitude
         }
         locationMap.set(userId, newLoc)
+    } else {
+        isUpdated = false;
     }
     return isUpdated;
 }
@@ -141,15 +157,18 @@ async function addNewUser(userId) {
 
     const topic = pubSubClient.topic(userId);
     const subscription = topic.subscription(userId);
+    locationMap.set(userId, null);
 
     try {
         await subscription.get({ autoCreate: true }, async (err, t) => {
             subscription.on('message', message => {
+                console.log(message.data.toString())
                 const messageBody = JSON.parse(message.data.toString());
                 if (isLocationUpdated(messageBody)) {
                     console.log('Received new location:', messageBody);
                     triggerNewRecommendation(messageBody);
                 }
+                message.ack();
             })
         })
     } catch (e) {
