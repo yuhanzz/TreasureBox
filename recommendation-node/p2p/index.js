@@ -13,6 +13,157 @@ const bootstrapMultiaddrs = config['bootstrapMultiaddrs'];
 
 const superagent = require('superagent');
 
+// ethereum
+var Web3 = require('web3');
+web3 = new Web3(new Web3.providers.HttpProvider('https://ropsten.infura.io/v3/82364750ca284a0d965c78ded806c582'));
+
+var contractABI = [
+    {
+        "inputs": [],
+        "name": "last_completed_migration",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "completed",
+                "type": "uint256"
+            }
+        ],
+        "name": "setCompleted",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "category",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "shipping",
+                "type": "string"
+            },
+            {
+                "internalType": "uint256",
+                "name": "price",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address payable",
+                "name": "seller",
+                "type": "address"
+            }
+        ],
+        "name": "makeOrder",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function",
+        "payable": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "seller",
+                "type": "address"
+            }
+        ],
+        "name": "retrieveOrderHistory",
+        "outputs": [
+            {
+                "internalType": "string[]",
+                "name": "",
+                "type": "string[]"
+            },
+            {
+                "internalType": "string[]",
+                "name": "",
+                "type": "string[]"
+            },
+            {
+                "internalType": "string[]",
+                "name": "",
+                "type": "string[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "address[]",
+                "name": "",
+                "type": "address[]"
+            },
+            {
+                "internalType": "address[]",
+                "name": "",
+                "type": "address[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    }
+]
+
+var contractAddress = "0x590660C69508a5B4f6e70e450516Bad17A7DD691";
+
+var contractInstance = new web3.eth.Contract(contractABI, contractAddress);
+
+
 // pubsub
 require('dotenv').config()
 const { PubSub } = require('@google-cloud/pubsub');
@@ -124,6 +275,15 @@ async function triggerNewRecommendation(messageBody) {
             console.log(itemList)
         });
 
+    itemList.sort(async function (itemA, itemB) {
+        const sellerA = itemA['seller'];
+        const sellerB = itemB['seller'];
+        // rpc to ethereum
+        const sellerASoldCount = await getSoldItemCount(sellerA);
+        const sellerBSoldCount = await getSoldItemCount(sellerB);
+
+        return sellerASoldCount - sellerBSoldCount;
+    });
 
     const recommendationMessage = {
         type: 'new_recommendation',
@@ -168,6 +328,19 @@ async function handleInitialRecommendationRequest(messageBody) {
     }
 
     node.pubsub.publish(buyerPeerId, ObjectToP2Pmessage(responseMessageBody))
+}
+
+async function getSoldItemCount(sellerAddress) {
+    var soldCount = 0;
+    await contractInstance.methods.retrieveOrderHistory(sellerAddress).call(function (error, result) {
+        if (error) {
+            console.log('error');
+            console.log(error);
+        }
+        console.log(result);
+        soldCount = result[0].length;
+    });
+    return soldCount;
 }
 
 const createNode = async (bootstrapers) => {
