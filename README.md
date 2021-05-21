@@ -1,113 +1,76 @@
 # TreasureBox
+A P2P second hand trading system
+## How to start the project
 
-1. Build and run p2p-boostrapper
+### 1. Start one or more bootstrapper node
+We can start up bootstrapper nodes in the P2P network as the entrypoint for peer discovery.  
 ```
-cd bootstrapper
-docker build -t p2p-boostrapper:latest .
-docker run -it -d -p 15003:15003 p2p-boostrapper:latest 
+cd bootstrapper  
+sudo docker build -t bootstrapper .  
+sudo docker run -d -p 15003:15003 bootstrapper:latest  
 ```
-2. Check the multiAddr of boostrapper node in docker logs, change the bootstrapMultiaddrs in peer/config.json
+The commands above start a bootstrapper node with a fixed peer id using peer-id.json. If we want to start another bootstrapper node, we need to generate a new peer id and update peer-id.json. we can use CLI to generate a new peer id: https://github.com/libp2p/js-peer-id#cli  
 
-3. Build and run p2p-peer, remember to change the host port if having multiple container running
+After the bootstrapper nodes are running, we need to add the address of the bootstrapper nodes in config.json of each p2p node. As long as one of the nodes in config.json is running, new nodes can join the network.  
+
+### 2. Start one or more item storage node
 ```
-cd peer
-docker build -t p2p-peer:latest .
-docker run -it -d -p 15002:15003 p2p-peer:latest
+cd item-storage-node  
+sudo docker-compose up  
 ```
 
+### 3. Start one or more item collection node
+```
+cd item-collection-node  
+sudo docker build . -t item-collection-node  
+sudo docker run -d --name collection --network=host item-collection-node:latest  
+```
 
-### Handshake (Similar to Gnutella 0.6)
+### 4. Start recommendation node
+```
+cd recommendation-node  
+sudo docker build -t recommendation-node .  
+sudo docker run -d --name recommendation --network=host recommendation-node:latest  
+```
 
-#### Interaction between buyer node and item collection node
+### 5. Start buyer node
+```
+cd buyer-node  
+sudo docker-compose up  
+```
 
-requestor:
-message title: search_item_query
-{
-  searchCategory: 'book',
-  peerId: 'QmYAAzFJ5gicPcxfbvDM1jq94m9X7xtLY2mPy2V1Qv7Z9N'
-  queryId: 'QmYAAzFJ5gicPcxfbvDM1jq94m9X7xtLY2mPy2V1Qv7Z9N-1619730897994-0'
-}
+### 6. Start seller node
+```
+sudo docker build -t seller-node .  
+sudo docker run -d --name seller --network=host seller-node:latest  
+```
 
-After search_item_query is sent, it will be stored in a HashMap with the following format:
-key: request_id(timestamp + id), value: part of the message body for search_item_request
+### 7. blockchain
+/blockchain folder contains the smart contracts and the truffle configurations for deploying the contract. 
 
-provider:
-message title: QmYAAzFJ5gicPcxfbvDM1jq94m9X7xtLY2mPy2V1Qv7Z9N (peerId of the requestor)
-{
-    type: 'search_item_query_hit'
-    queryId: queryId extracted from the query body
-}
+### 8. machine learning
+/machine-learning folder contains the code we run on AWS lambda and AWS SageMaker for creating the machine learning endpoint.
 
-When the requestor received the first response from the provider, it will send the following message with
-the peer id of the first responded provider, then this request id will be removed in the HashMap, so that the 
-following query hit response will be ignored. 
-
-requestor: (Choose the peer with fasted respond)
-message title: QmYs36261DpmVUxqBNrYcz5FRm11F2fApet1yZTGLbgCRp
-{
-    type: 'search_item_request'
-    searchCategory: 'book'
-    peer_id: QmdLdBSbAHBdnEDtdEeTLisF3EzXwNQtbgymhX1svPH3ZS
-}
-
-provider:
-message title: QmdLdBSbAHBdnEDtdEeTLisF3EzXwNQtbgymhX1svPH3ZS
-{
-    type: search_item_response
-    content: {
-        "name": "The Sign of the Four",
-        "detail": "Written by Sherlock Holmes. Bought in 2010.",
-        "picture": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAzgAAAHeC...."   // use Base 64 Encoding
-    }
-}
+### Notes
+1. We've closed our Amazon RDS, Google pub/sub, Amazon Lambda and Amazon SageMaker services, so the nodes should be reconfigured using new cloud services crendentials in order to work properly. 
+2. If you have a Linux machine, the nodes could be running properly using docker. If you have a Mac machine, due to some limitation of docker for mac, bugs might be encountered because it fails to find the right ip address using host network mode. So on Mac, you might want to start the project without docker. The instructions for starting the seller-node and buyer-node locally without docker are placed in the README of seller-node and buyer-node.
 
 
-### Item search flow
+## Design diagrams
 
-buyer node:
-    send:
-        search_item_request
-    handle:
-        search_item_response
+### Architecture
+![Alt text](images/image1.png?raw=true "Title")
+### Sell item flow
+![Alt text](images/image2.png?raw=true "Title")
 
-seller node:
-    send:
-        post_item_request
+### Search item flow
+![Alt text](images/image3.png?raw=true "Title")
 
-item collection node:
-    send:
-        search_item_response
-    handle:
-        search_item_request
+### Order item flow
+![Alt text](images/image4.png?raw=true "Title")
 
-MQTT node:
-    handle:
-        post_item_request
+### recommendation flow - part 1: initialization
+![Alt text](images/image5.png?raw=true "Title")
 
-
-### Tech stack
-all node:
-    node.js
-    libp2p
-    docker
-    mosquitto
-
-buyer node:
-    express.js
-
-
-### TODO
-Need to prevent empty input in text box
-
-
-### on AWS EC2
-sudo yum update -y
-sudo yum groupinstall "Development Tools" -y
-sudo amazon-linux-extras install docker -y
-
-sudo service docker start
-sudo docker build -t p2p-boostrapper:latest .
-sudo docker run -it -p 15003:15003 p2p-boostrapper:latest
-
-### on local
-might need to remove node_modules when error occurs
+### recommendation flow - part 2: update geolocation
+![Alt text](images/image6.png?raw=true "Title")
