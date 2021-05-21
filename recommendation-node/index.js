@@ -263,7 +263,7 @@ async function triggerNewRecommendation(messageBody) {
     }
 
     // filter itemList with machine learning model
-    superagent.post('http://ml:9090/recommendation')
+    superagent.post('https://74iwvx8mbg.execute-api.us-east-1.amazonaws.com/test/recommendation')
         .send(messageToFlask)
         .end((err, res) => {
             if (err) { return console.log(err); }
