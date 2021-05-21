@@ -257,41 +257,55 @@ async function triggerNewRecommendation(messageBody) {
         responseMap.delete(queryId);
     });
 
-    const messageToFlask = {
+    console.log('all nearby items')
+    console.log(itemList)
+
+    const messageToLambda = {
         username: messageBody['userId'],
         data: itemList
     }
 
+    if (itemList.length < 2) {
+	console.log('nearby items less than two')
+	console.log(itemList)
+        const recommendationMessage = {
+            type: 'new_recommendation',
+            data: itemList
+        }
+	node.pubsub.publish(messageBody['from'], ObjectToP2Pmessage(recommendationMessage));
+	return;
+    }
+
     // filter itemList with machine learning model
     superagent.post('https://74iwvx8mbg.execute-api.us-east-1.amazonaws.com/test/recommendation')
-        .send(messageToFlask)
+        .send(messageToLambda)
         .end((err, res) => {
             if (err) { return console.log(err); }
-            var recommendedIds = res.body['recommend'];
+	    var recommendedIds = res.body['recommend'];
 
             itemList.filter((item) => item.id in recommendedIds);
 
             console.log('filtered by machine learning')
             console.log(itemList)
+
+            itemList.sort(async function (itemA, itemB) {
+                const sellerA = itemA['seller'];
+                const sellerB = itemB['seller'];
+                // rpc to ethereum
+                const sellerASoldCount = await getSoldItemCount(sellerA);
+                const sellerBSoldCount = await getSoldItemCount(sellerB);
+        
+                return sellerASoldCount - sellerBSoldCount;
+            });
+	    console.log('sorted by ethereum data')
+	    console.log(itemList)
+        
+            const recommendationMessage = {
+                type: 'new_recommendation',
+                data: itemList
+            }
+            node.pubsub.publish(messageBody['from'], ObjectToP2Pmessage(recommendationMessage));
         });
-
-    itemList.sort(async function (itemA, itemB) {
-        const sellerA = itemA['seller'];
-        const sellerB = itemB['seller'];
-        // rpc to ethereum
-        const sellerASoldCount = await getSoldItemCount(sellerA);
-        const sellerBSoldCount = await getSoldItemCount(sellerB);
-
-        return sellerASoldCount - sellerBSoldCount;
-    });
-
-    const recommendationMessage = {
-        type: 'new_recommendation',
-        data: itemList
-    }
-
-
-    node.pubsub.publish(messageBody['from'], ObjectToP2Pmessage(recommendationMessage));
 
 }
 
@@ -337,7 +351,7 @@ async function getSoldItemCount(sellerAddress) {
             console.log('error');
             console.log(error);
         }
-        console.log(result);
+        // console.log(result);
         soldCount = result[0].length;
     });
     return soldCount;
@@ -397,10 +411,10 @@ async function startPeer() {
         })
 
         node.pubsub.on(myPeerId, async (msg) => {
-            console.log('message title: my peer id')
+            // console.log('message title: my peer id')
             const messageBody = P2PmessageToObject(msg);
-            console.log('message type: ' + messageBody['type'])
-            console.log(messageBody);
+            // console.log('message type: ' + messageBody['type'])
+            // console.log(messageBody);
             if (messageBody['type'] == 'recommendation_request') {
                 handleInitialRecommendationRequest(messageBody)
             } else if (messageBody['type'] == 'search_item_query_hit') {
